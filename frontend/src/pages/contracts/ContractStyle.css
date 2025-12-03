@@ -1,0 +1,25 @@
+.bg-pattern {
+    background: radial-gradient(circle at 494px -372px, rgba(0, 98, 255, 0.2) 0%, rgba(0, 98, 255, 0) 100%), #ECF3FD;
+    border: 0.5px solid #DCE8F8;
+    position: relative;
+    padding: 1rem;
+    overflow: hidden;
+    /* Ensure the pattern does not overflow */
+}
+
+.bg-pattern::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKgAAABgCAYAAACJ8DltAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAEcSURBVHgB7d0xDsIwEADBmD9S8T4qHhlat0jBWcLMB06ytrF0ssf9se/bF72eY2x/ZPV5Xn3ebYMwgZImUNIESppASRMoaQIlTaCkCZQ0gZImUAAAgMmwv2jeJ/NWc4snTaCkCZQ0gZImUNIESppASRMoaQIlTaCkCRQAAGCyfNfPvuSxvA8KJxIoaQIlTaCkCZQ0gZImUNIESppASRMoaQIFAACYXP590NWc57Hc4kkTKGkCJU2gpAmUNIGSJlDSBEqaQEkTKGkCBQAAmPgv/uB5q3kfFE4kUNIESppASRMoaQIlTaCkCZQ0gZImUNIECgAAMPFf/I/PW80+KEwESppASRMoaQIlTaCkCZQ0gZImUNIESppAAQAAJm/Q/miLnJGudQAAAABJRU5ErkJggg==') repeat;
+    mix-blend-mode: plus-lighter;
+    opacity: 0.06;
+}
+
+.info-box {
+    background-color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    position: relative;
+}

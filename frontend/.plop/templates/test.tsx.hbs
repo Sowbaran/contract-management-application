@@ -1,0 +1,12 @@
+import { render, screen } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+
+import { {{pascalCase name}} } from '.'
+
+describe('<{{pascalCase name}} />', () => {
+  it('renders', () => {
+    render(<{{pascalCase name}} prop="{{lowerCase name}}" />)
+
+    expect(screen.getByText(/{{lowerCase name}}/i)).toBeTruthy();
+  })
+})

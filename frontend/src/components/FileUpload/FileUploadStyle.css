@@ -1,0 +1,25 @@
+
+
+
+
+
+.filepond--file-status-main {
+    visibility:hidden;
+}
+.filepond--file-status{
+    padding-bottom: 0px;
+    margin-left: 10px;
+}
+
+.filepond--file-status-main::after {
+    content: "Uploaded"; /* Replace with your custom text */
+    visibility: visible; /* Ensure it's visible */
+}
+
+
+
+.filepond--file-status-sub{
+    display: none;
+}
+
+/* class="filepond--file-action-button filepond--action-remove-item" */

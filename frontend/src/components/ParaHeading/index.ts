@@ -1,0 +1,1 @@
+export { ParaHeading } from './ParaHeading'

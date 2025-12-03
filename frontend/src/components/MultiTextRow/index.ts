@@ -1,0 +1,1 @@
+export { MultiTextRow } from './MultiTextRow'

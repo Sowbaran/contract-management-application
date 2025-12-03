@@ -1,0 +1,46 @@
+name: ci
+on:
+  push:
+
+permissions:
+  id-token: write
+  contents: read
+  packages: read
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: Setup npmrc
+        run: |
+          echo "@nrldigitaltechnology:registry=https://npm.pkg.github.com/
+          //npm.pkg.github.com/:_authToken=${{ secrets.SVC_RELEASE_TOKEN }}" > ~/.npmrc
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: CDK setup
+        run: cd cdk && npm install
+
+      - name: Setup signature
+        run: npm install
+
+      - name: build
+        run: |
+          if jq -e '.scripts.build' package.json ; then
+            NODE_ENV=dev npm run build
+          fi
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::092874949167:role/github-actions-${{ github.event.repository.name }}
+          aws-region: ap-southeast-2
+
+      - name: cdk synth
+        if: hashFiles('cdk.json') != ''
+        run: cd cdk && npm run cdk synth

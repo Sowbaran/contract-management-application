@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": [
+      "es2022",
+      "dom"
+    ],
+    "baseUrl": "./",
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true,
+    "esModuleInterop" : true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "inlineSources": true,
+    "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  "exclude": [
+    "node_modules",
+    "cdk.out"
+  ]
+}

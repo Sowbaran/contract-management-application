@@ -1,0 +1,117 @@
+name: deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Which environment to deploy? (dev, test or prod)
+        required: true
+        options:
+          - dev
+          - qa
+          - prd
+      cypress_action:
+        type: choice
+        description: Run cypress test?  (Ignore test, tags)
+        required: true
+        options:
+          - Ignore test
+          - sanity
+          - e2e
+
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-fixed-ip
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - if: inputs.environment == 'prod' && github.ref != 'refs/heads/main'
+        name: Make sure isnt prod deploying from branch
+        run: exit 1
+
+      - name: Git clone the repository
+        uses: actions/checkout@v3
+
+      - name: Setup npmrc
+        run: |
+          echo "@nrldigitaltechnology:registry=https://npm.pkg.github.com/
+          //npm.pkg.github.com/:_authToken=${{ secrets.SVC_RELEASE_TOKEN }}" > ~/.npmrc
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - run: npm install
+
+      - run: npm run build
+        env:
+          VITE_APP_ENVIRONMENT: ${{ vars.VITE_APP_ENVIRONMENT }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_AZURE_CLIENT_ID: ${{ vars.VITE_AZURE_CLIENT_ID }}
+          VITE_APP_REDIRECT_URL: ${{ vars.VITE_APP_REDIRECT_URL }}
+          VITE_APP_CYPRESS_USER: ${{ vars.VITE_APP_CYPRESS_USER }}
+          VITE_APP_CYPRESS_CREDENTIAL: ${{ vars.VITE_APP_CYPRESS_CREDENTIAL }}
+          VITE_DASHBOARD_ID: ${{ vars.VITE_DASHBOARD_ID }}
+          VITE_DASHBOARD_URL: ${{ vars.VITE_DASHBOARD_URL }}
+
+      - name: "Create env file"
+        run: |
+          touch .env
+          echo VITE_APP_ENVIRONMENT=${{ vars.VITE_APP_ENVIRONMENT }} >> .env
+          echo VITE_API_URL=${{ vars.VITE_API_URL }} >> .env
+          echo VITE_AZURE_CLIENT_ID=${{ vars.VITE_AZURE_CLIENT_ID }} >> .env
+          echo VITE_APP_REDIRECT_URL=${{ vars.VITE_APP_REDIRECT_URL }} >> .env
+          echo VITE_APP_CYPRESS_USER=${{ vars.VITE_APP_CYPRESS_USER }} >> .env
+          echo VITE_APP_CYPRESS_CREDENTIAL=${{ vars.VITE_APP_CYPRESS_CREDENTIAL }} >> .env
+          echo VITE_DASHBOARD_ID=${{ vars.VITE_DASHBOARD_ID }} >> .env
+          echo VITE_DASHBOARD_URL=${{ vars.VITE_DASHBOARD_URL }} >> .env
+          cat .env
+      - run: cd cdk && npm install
+      - run: npm install && npm run setup
+
+      - name: build
+        run: |
+          if jq -e '.scripts.build' package.json ; then
+            cd cdk && npm run build
+          fi
+      - name: build
+        run: |
+          if jq -e '.scripts.build' package.json ; then
+            npm run build
+          fi
+
+      - name: configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::092874949167:role/github-actions-${{ github.event.repository.name }}
+          aws-region: ap-southeast-2
+
+      - name: cdk deploy
+        run: |
+          cd cdk && npm run cdk deploy "${{ inputs.environment }}-*"
+
+      - name: Run Cypress tests
+        if: ${{ inputs.cypress_action != 'Ignore test' }}
+        uses: cypress-io/github-action@v6
+        with:
+          command: npx cypress run --browser chrome --env TAGS=@${{ inputs.cypress_action }} --spec cypress/e2e/features/sanity_suite.feature
+
+          publish-summary: true
+          summary-title: "Cypress test result"
+
+      - name: Generate HTML report
+        if: ${{ always() && inputs.cypress_action != 'Ignore test' }}
+        run: npm run htmlreport
+
+      - name: Upload test artifacts
+        if: ${{ always() && inputs.cypress_action != 'Ignore test' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/report-html
+            cypress/screenshots

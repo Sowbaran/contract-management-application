@@ -1,0 +1,33 @@
+import { Meta, Typeset } from '@storybook/blocks';
+import resolveConfig from 'tailwindcss/resolveConfig';
+import tailwindConfig from '../../tailwind.config.js';
+
+export const fullConfig = resolveConfig(tailwindConfig);
+export const theme = fullConfig.theme;
+
+export const fontSizes = theme.fontSize || {};
+export const fontWeights = theme.fontWeight || {};
+export const fontFamily = theme.fontFamily.sans.join(', ');
+
+<Meta title="Typography" />
+
+export const SampleText = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
+
+# Typography
+
+<Typeset
+  fontSizes={[
+    fontSizes.sm,
+    fontSizes.md,
+    fontSizes.lg,
+    fontSizes.xl,
+    fontSizes["2xl"],
+    fontSizes["3xl"],
+    fontSizes["4xl"],
+    fontSizes["5xl"],
+    fontSizes["6xl"],
+  ]}
+  fontWeight={fontWeights.regular}
+  sampleText={SampleText}
+  fontFamily={fontFamily}
+/>

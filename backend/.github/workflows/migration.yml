@@ -1,0 +1,80 @@
+name: run-migration
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Migration action'
+        required: true
+        type: choice
+        options:
+          - up
+          - down
+          - downAll
+          - status
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - prd
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup npmrc
+        run: |
+          echo "@nrldigitaltechnology:registry=https://npm.pkg.github.com/
+          //npm.pkg.github.com/:_authToken=${{ secrets.SVC_RELEASE_TOKEN }}" > ~/.npmrc
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create env file
+        if: inputs.action != 'none'
+        run: |
+          touch .env
+          # Use proper quoting and escaping for special characters
+          printf 'MONGO_URI="%s"\n' "$(echo "${{ vars.MONGO_URI }}" | tr -d '\r\n')" >> .env
+          printf 'MONGO_DB_NAME="%s"\n' "$(echo "${{ vars.MONGO_DB_NAME }}" | tr -d '\r\n')" >> .env
+          cat .env
+
+      - name: Export environment variables
+        if: inputs.action != 'none'
+        run: |
+          export MONGO_URI=${{ vars.MONGO_URI }}
+          export MONGO_DB_NAME=${{ vars.MONGO_DB_NAME }}
+          echo "Exported environment variables:"
+          printenv | grep -E "MONGO_URI|MONGO_DB_NAME"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-${{ github.event.repository.name }}
+          aws-region: ap-southeast-2
+
+      - name: Run migration
+        if: inputs.action != 'none'
+        env:
+          MONGO_URI: ${{ vars.MONGO_URI }}
+          MONGO_DB_NAME: ${{ vars.MONGO_DB_NAME }}
+          REGION: ap-southeast-2
+          IS_LOCAL: "false"
+        run: |
+          npx ts-node -r tsconfig-paths/register libs/common/src/database/migrate.ts ${{ inputs.action }}

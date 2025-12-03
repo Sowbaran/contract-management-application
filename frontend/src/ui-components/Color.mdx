@@ -1,0 +1,28 @@
+import { Meta, ColorPalette, ColorItem } from '@storybook/blocks';
+import resolveConfig from 'tailwindcss/resolveConfig'
+import tailwindConfig from '../../tailwind.config.js'
+
+export const fullConfig = resolveConfig(tailwindConfig)
+export const colors = fullConfig.theme.accentColor
+
+<Meta title="Colors" />
+
+# Colors
+
+<ColorPalette>
+  <ColorItem title="theme.color.primary" subtitle="Indigo" colors={{ "Light (indigo-500)": colors.indigo[500], "Dark (indigo-950)":colors.indigo[950]}} />
+  <ColorItem title="theme.color.secondary" subtitle="Gray" colors={{ "Light (gray-600)": colors.gray[500], "Dark (gray-600)":colors.gray[600]}} />
+  <ColorItem
+    title="MonoChrome"
+    colors={{
+      Dark: Colors.Dark,
+      DarkOne: Colors.DarkOne,
+      DarkTwo: Colors.DarkTwo,
+      DarkThree: Colors.DarkThree,
+      DarkFour: Colors.DarkFour,
+      Medium: Colors.Medium,
+      Light: Colors.Light,
+      LightOne: Colors.LightOne,
+  }}
+  />
+</ColorPalette>
