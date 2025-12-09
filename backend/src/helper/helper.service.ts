@@ -232,145 +232,150 @@ export class HelperService {
           },
         ];
         break;
+      // DOCUSIGN ESIGNREQUEST CASE COMMENTED OUT - DocuSign is disabled
+      // ESIGNREQUEST tab will return empty results since no forms will have ESIGNINITIATED status
       case TabRequest.ESIGNREQUEST:
-        if (isAllAccess) {
-          queryCriteria.status = DocusignStatus.ESIGNINITIATED;
-        } else if (apiType !== ApiCode.RESET) {
-          this.logger.log(`userRoleIds, ${JSON.stringify(userRoleIds)}`);
-          queryCriteria.$and = [
-            { status: DocusignStatus.ESIGNINITIATED, active: true },
-            // Condition 1: Workflow check
-            {
-              $or: [
-                {
-                  workflowOrder: {
-                    $elemMatch: {
-                      roleId: { $in: userRoleIds },
-                      status: FormStatus.PENDING,
-                    },
-                  },
-                  workflow: { $in: userRoleIds },
-                },
-                {
-                  workflowOrder: {
-                    $elemMatch: {
-                      isSpecificDeptApprover: true,
-                      status: FormStatus.PENDING,
-                      roleId: { $in: userRoleIds },
-                    },
-                  },
-                  department: { $in: departmentIds },
-                  workflow: { $in: userRoleIds },
-                },
-              ],
-            },
-            {
-              $expr: {
-                $and: [
-                  {
-                    $gt: [
-                      {
-                        $size: {
-                          $filter: {
-                            input: "$formHistory",
-                            as: "history",
-                            cond: {
-                              $or: [
-                                {
-                                  $eq: [
-                                    "$$history.status",
-                                    DocusignStatus.ESIGNINITIATED,
-                                  ],
-                                },
-                                {
-                                  $eq: [
-                                    "$$history.status",
-                                    FormHistoryStatus.Retriggered,
-                                  ],
-                                },
-                              ],
-                            },
-                          },
-                        },
-                      },
-                      0,
-                    ],
-                  },
-                  {
-                    $in: [
-                      emailId,
-                      {
-                        $cond: [
-                          {
-                            $eq: [
-                              { $arrayElemAt: ["$formHistory.status", -1] },
-                              DocusignStatus.ESIGNINITIATED,
-                            ],
-                          },
-                          [
-                            {
-                              $arrayElemAt: [
-                                {
-                                  $map: {
-                                    input: "$formHistory",
-                                    as: "h",
-                                    in: "$$h.approvedBy",
-                                  },
-                                },
-                                -1,
-                              ],
-                            },
-                          ],
-                          {
-                            $cond: [
-                              {
-                                $eq: [
-                                  { $arrayElemAt: ["$formHistory.status", -2] },
-                                  DocusignStatus.ESIGNINITIATED,
-                                ],
-                              },
-                              [
-                                {
-                                  $arrayElemAt: [
-                                    {
-                                      $map: {
-                                        input: "$formHistory",
-                                        as: "h",
-                                        in: "$$h.approvedBy",
-                                      },
-                                    },
-                                    -2,
-                                  ],
-                                },
-                              ],
-                              {
-                                $slice: [
-                                  {
-                                    $map: {
-                                      input: "$formHistory",
-                                      as: "h",
-                                      in: "$$h.approvedBy",
-                                    },
-                                  },
-                                  -2,
-                                ],
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          ];
-        } else {
-          throw new ForbiddenException(
-            "Invalid permissions for ESIGN request reset",
-          );
-        }
+        // Return empty query (no results) since DocuSign is disabled
+        queryCriteria._id = new Types.ObjectId("000000000000000000000000"); // Non-existent ID to return empty results
         break;
+        // if (isAllAccess) {
+        //   queryCriteria.status = DocusignStatus.ESIGNINITIATED;
+        // } else if (apiType !== ApiCode.RESET) {
+        //   this.logger.log(`userRoleIds, ${JSON.stringify(userRoleIds)}`);
+        //   queryCriteria.$and = [
+        //     { status: DocusignStatus.ESIGNINITIATED, active: true },
+        //     // Condition 1: Workflow check
+        //     {
+        //       $or: [
+        //         {
+        //           workflowOrder: {
+        //             $elemMatch: {
+        //               roleId: { $in: userRoleIds },
+        //               status: FormStatus.PENDING,
+        //             },
+        //           },
+        //           workflow: { $in: userRoleIds },
+        //         },
+        //         {
+        //           workflowOrder: {
+        //             $elemMatch: {
+        //               isSpecificDeptApprover: true,
+        //               status: FormStatus.PENDING,
+        //               roleId: { $in: userRoleIds },
+        //             },
+        //           },
+        //           department: { $in: departmentIds },
+        //           workflow: { $in: userRoleIds },
+        //         },
+        //       ],
+        //     },
+        //     {
+        //       $expr: {
+        //         $and: [
+        //           {
+        //             $gt: [
+        //               {
+        //                 $size: {
+        //                   $filter: {
+        //                     input: "$formHistory",
+        //                     as: "history",
+        //                     cond: {
+        //                       $or: [
+        //                         {
+        //                           $eq: [
+        //                             "$$history.status",
+        //                             DocusignStatus.ESIGNINITIATED,
+        //                           ],
+        //                         },
+        //                         {
+        //                           $eq: [
+        //                             "$$history.status",
+        //                             FormHistoryStatus.Retriggered,
+        //                           ],
+        //                         },
+        //                       ],
+        //                     },
+        //                   },
+        //                 },
+        //               },
+        //               0,
+        //             ],
+        //           },
+        //           {
+        //             $in: [
+        //               emailId,
+        //               {
+        //                 $cond: [
+        //                   {
+        //                     $eq: [
+        //                       { $arrayElemAt: ["$formHistory.status", -1] },
+        //                       DocusignStatus.ESIGNINITIATED,
+        //                     ],
+        //                   },
+        //                   [
+        //                     {
+        //                       $arrayElemAt: [
+        //                         {
+        //                           $map: {
+        //                             input: "$formHistory",
+        //                             as: "h",
+        //                             in: "$$h.approvedBy",
+        //                           },
+        //                         },
+        //                         -1,
+        //                       ],
+        //                     },
+        //                   ],
+        //                   {
+        //                     $cond: [
+        //                       {
+        //                         $eq: [
+        //                           { $arrayElemAt: ["$formHistory.status", -2] },
+        //                           DocusignStatus.ESIGNINITIATED,
+        //                         ],
+        //                       },
+        //                       [
+        //                         {
+        //                           $arrayElemAt: [
+        //                             {
+        //                               $map: {
+        //                                 input: "$formHistory",
+        //                                 as: "h",
+        //                                 in: "$$h.approvedBy",
+        //                               },
+        //                             },
+        //                             -2,
+        //                           ],
+        //                         },
+        //                       ],
+        //                       {
+        //                         $slice: [
+        //                           {
+        //                             $map: {
+        //                               input: "$formHistory",
+        //                               as: "h",
+        //                               in: "$$h.approvedBy",
+        //                             },
+        //                           },
+        //                           -2,
+        //                         ],
+        //                       },
+        //                     ],
+        //                   },
+        //                 ],
+        //               },
+        //             ],
+        //           },
+        //         ],
+        //       },
+        //     },
+        //   ];
+        // } else {
+        //   throw new ForbiddenException(
+        //     "Invalid permissions for ESIGN request reset",
+        //   );
+        // }
+        // break;
  
       default:
         throw new BadRequestException(`Invalid request type: ${type}`);

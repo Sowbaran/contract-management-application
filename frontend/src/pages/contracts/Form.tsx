@@ -190,26 +190,26 @@ export const ContractAddEditForm = ({
 
   const [departmentDD, setDepartmentDD] = useState<SelectValueProps[]>([]);
 
-  const [selectedDepartment, setSelectedDepartment] = useState<AnyProp>();
+  const [selectedDepartment, setSelectedDepartment] = useState<AnyProp>(undefined);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string>("");
-  const [selectedGeneralManager, setSelectedGeneralManager] = useState<AnyProp>();
+  const [selectedGeneralManager, setSelectedGeneralManager] = useState<AnyProp>(undefined);
   const [generalManagerOptions, setGeneralManagerOptions] = useState<
     { value: string; label: string }[]
   >([]);
-  const [selectedEntity, setSelectedEntity] = useState<SelectValueProps>();
+  const [selectedEntity, setSelectedEntity] = useState<SelectValueProps | undefined>(undefined);
   const [selectedCurrency, setSelectedCurrency] = useState<SelectValueProps | undefined>(
     currencyOptions[0]
   );
-  const [selectedApproval, setSelectedApproval] = useState<SelectValueProps>();
-  const [SSTApproval, setSSTApproval] = useState<string>();
-  const [modernSlavery, setModernSlavery] = useState<string>();
-  const [contractTechReview, setContractTechReview] = useState<string>();
-  const [contractTechReviewRadioBtn, setContractTechReviewRadioBtn] = useState<string>();
-  const [supplierCodeConduct, setSupplierCodeConduct] = useState<string>();
+  const [selectedApproval, setSelectedApproval] = useState<SelectValueProps | undefined>(undefined);
+  const [SSTApproval, setSSTApproval] = useState<string>("");
+  const [modernSlavery, setModernSlavery] = useState<string>("");
+  const [contractTechReview, setContractTechReview] = useState<string>("");
+  const [contractTechReviewRadioBtn, setContractTechReviewRadioBtn] = useState<string>("");
+  const [supplierCodeConduct, setSupplierCodeConduct] = useState<string>("");
   const [armsLengthTransact, setArmsLengthTransact] = useState("");
   const [contractCounterParty, setContractCounterParty] = useState("");
   const [isCapitalExpenditure, setIsCapitalExpenditure] = useState("");
-  const [expenditureContract, setExpenditureContract] = useState<string>();
+  const [expenditureContract, setExpenditureContract] = useState<string>("");
   const [alertInfo, setAlertInfo] = useState<AlertProps>();
 
   const [selectFormCode, setSelectFormCode] = useState<string>("");
@@ -708,14 +708,9 @@ export const ContractAddEditForm = ({
     }
 
     // Document upload validations
-    if (
-      msaS3UrlRef.current.length === 0 &&
-      (type === "add" || (type === "edit" && formStatus === "draft")) &&
-      selectedApproval?.value !== "Expenditure no contract for signing"
-    ) {
-      errors.push("Contract document upload field is required");
-      firstInvalidField = firstInvalidField || "msa_attachments";
-    }
+    // MSA attachments are optional during initial submission
+    // They are only required when uploading signed contracts after form completion
+    // No validation needed here for new forms or draft submissions
 
     return {
       isValid: errors.length === 0,
@@ -961,8 +956,11 @@ export const ContractAddEditForm = ({
     };
 
     console.log("Form Request Data", formPostData);
+    console.log(`📤 Submitting form - Type: ${type}, Status: ${formStatus}, Endpoint: ${type === "add" || (type === "edit" && formStatus === "draft") ? "CREATE (POST)" : "UPDATE (PUT)"}`);
     setIsLoading(true);
-    if (type === "add") {
+    if (type === "add" || (type === "edit" && formStatus === "draft")) {
+      // Use CREATE endpoint for new forms and draft submissions
+      // This ensures workflow is properly initialized and emails are sent
       formMutate({
         body: { ...formPostData } as AnyProp,
         headers: {
@@ -970,21 +968,13 @@ export const ContractAddEditForm = ({
         }
       });
     } else if (type === "edit") {
-      if (formStatus === "draft") {
-        formMutate({
-          body: { ...formPostData } as AnyProp,
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-      } else {
-        formMutateUpdate({
-          body: { ...formPostData } as AnyProp,
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        });
-      }
+      // Use UPDATE endpoint only for resubmitting rejected forms
+      formMutateUpdate({
+        body: { ...formPostData } as AnyProp,
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
     }
   };
 

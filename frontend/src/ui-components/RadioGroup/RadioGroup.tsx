@@ -23,6 +23,8 @@ export const RadioGroupItem = forwardRef<RadioGroupItemRef, RadioGroupItemProps>
       outerCheckedStyle,
       innerCheckedStyle,
       radioContainerStyle,
+      labelStyle,
+      checkedStyle,
       ...props
     },
     ref

@@ -399,7 +399,7 @@ export function ContractDetailPage() {
   const [isFinalApprover, setIsFinalApprover] = useState(false);
   const [showFinalApproverAlert, setShowFinalApproverAlert] = useState(false);
   const [esignRequired, setEsignRequired] = useState(false);
-  const [esignRadioBtn, setEsignRadioBtn] = useState("");
+  const [esignRadioBtn, setEsignRadioBtn] = useState("No"); // DOCUSIGN DISABLED: Always set to "No"
   const [witnessRadioBtn, setWitnessRadioBtn] = useState("");
   const [witnessName, setWitnessName] = useState("");
   const [witnessEmail, setWitnessEmail] = useState("");
@@ -864,8 +864,8 @@ export function ContractDetailPage() {
 
     // Prepare the body for the approval request
     const body: UpdateFormApprovalDto = {
-      eSignRequired: esignRequired,
-      witnessFlag: false,
+      eSignRequired: false, // DOCUSIGN DISABLED: Always false
+      witnessFlag: false, // DOCUSIGN DISABLED: Always false
       moduleId: moduleId,
       emailId: emailId,
       formId: formId,
@@ -1155,8 +1155,8 @@ export function ContractDetailPage() {
       setRejectIsLoading(true);
 
       const body = {
-        eSignRequired: esignRequired,
-        witnessFlag: false,
+        eSignRequired: false, // DOCUSIGN DISABLED: Always false
+        witnessFlag: false, // DOCUSIGN DISABLED: Always false
         moduleId: moduleId,
         emailId: emailId,
         formId: formId,
@@ -1220,9 +1220,33 @@ export function ContractDetailPage() {
     }
   };
 
+  // DOCUSIGN DISABLED: Skip popup and directly approve without DocuSign
   const handleOpenFinalApproverAlert = () => {
-    setAlertInfo({ title: "Final Review Submission" });
-    setShowFinalApproverAlert(true);
+    // Skip the DocuSign popup and directly approve with eSignRequired = false
+    setFinalApproveIsLoading(true);
+    const body = {
+      moduleId: moduleId,
+      emailId: emailId,
+      formId: formId,
+      status: "approved",
+      formAdditionalInfo: {},
+      isAdditionalAccess: false,
+      mailRedirectPath: `finance/vendor-contract/requests/detail/${formId}?page=approveRequest&moduleId=${moduleId}`,
+      isHeadOfPnCFinalApprover: false,
+      eSignRequired: false, // DOCUSIGN DISABLED: Always false
+      witnessFlag: false, // DOCUSIGN DISABLED: Always false
+      witnessName: "",
+      witnessEmail: ""
+    };
+    console.info("Form ~ Final Approver (DocuSign Disabled):", body);
+    financeApproveFormSubmit({
+      body: { ...body } as AnyProp,
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+    // setAlertInfo({ title: "Final Review Submission" });
+    // setShowFinalApproverAlert(true);
   };
 
   const finalApproverForm = () => {
@@ -1523,8 +1547,8 @@ export function ContractDetailPage() {
         isAdditionalAccess: false,
         mailRedirectPath: `finance/vendor-contract/requests/detail/${formId}?page=approveRequest&moduleId=${moduleId}`,
         isHeadOfPnCFinalApprover: false,
-        eSignRequired: esignRadioBtn === "Yes" ? true : false,
-        witnessFlag: witnessRadioBtn === "Yes" ? true : false,
+        eSignRequired: false, // DOCUSIGN DISABLED: Always false
+        witnessFlag: false, // DOCUSIGN DISABLED: Always false
         witnessName: witnessName,
         witnessEmail: witnessEmail
       };
@@ -1813,8 +1837,8 @@ export function ContractDetailPage() {
       };
 
       const body = {
-        eSignRequired: esignRequired,
-        witnessFlag: false,
+        eSignRequired: false, // DOCUSIGN DISABLED: Always false
+        witnessFlag: false, // DOCUSIGN DISABLED: Always false
         moduleId: moduleId,
         emailId: emailId,
         formId: formId,
@@ -2696,7 +2720,7 @@ export function ContractDetailPage() {
           additionalUiContents={finalApproverForm()}
           buttonContents={updatedApproveButtons}
           icon={alertInfo?.type === "success" ? <SuccessIcon /> : <ErrorIcon />}
-          open={showFinalApproverAlert}
+          open={false}
           setOpen={setShowFinalApproverAlert}
           {...alertInfo}
           customStyles={{ alertBoxContainerStyle: "w-1/3" }}

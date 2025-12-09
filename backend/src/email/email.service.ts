@@ -2,27 +2,24 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  OnModuleInit,
 } from "@nestjs/common";
-import { HttpService } from "@nestjs/axios";
-import { firstValueFrom } from "rxjs";
-import { SecretService } from "../secret/secret.service";
-import { commonDomainEndPaths } from "../constants";
+import * as nodemailer from "nodemailer";
 
 @Injectable()
-export class EmailService implements OnModuleInit {
+export class EmailService {
   protected readonly logger = new Logger(EmailService.name);
-  private communicationServiceApiKey: string;
-  private communicationServiceBasePath: string;
-  constructor(
-    private readonly httpService: HttpService,
-    private secretService: SecretService,
-  ) {}
+  private transporter: nodemailer.Transporter;
 
-  async onModuleInit() {
-    const secrets = await this.secretService.fetchSecret();
-    this.communicationServiceApiKey = secrets.communicationServiceApiKey;
-    this.communicationServiceBasePath = secrets.communicationServiceBasePath;
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: parseInt(process.env.SMTP_PORT || "587"),
+      secure: process.env.SMTP_SECURE === "true",
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    });
   }
 
   async sendEmailWithTemplate(
@@ -33,30 +30,25 @@ export class EmailService implements OnModuleInit {
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     cc?: any,
   ): Promise<void> {
-    const data = {
+    const mailOptions = {
+      from: process.env.SMTP_FROM,
       to: recipient,
       subject: subject,
       html: body,
-      ...(cc && { cc: cc }), // Conditionally add the cc field if it exists
+      ...(cc && { cc: cc }),
     };
+
     try {
       this.logger.log(
-        `Enter into communication service with payload: ${JSON.stringify(data)}`,
+        `Sending email to ${recipient} with subject: ${subject}`,
       );
-      await firstValueFrom(
-        this.httpService.post(
-          `${this.communicationServiceBasePath}${commonDomainEndPaths.EMAILWITHHTML}`,
-          data,
-          {
-            headers: {
-              "x-api-key": this.communicationServiceApiKey,
-            },
-          },
-        ),
-      );
+      await this.transporter.sendMail(mailOptions);
       this.logger.log(
         `Email successfully dispatched to ${recipient as string}`,
       );
+      console.log('\n========================================');
+      console.log('✅ ✅ ✅ MAIL IS SENT SUCCESSFULLY!!! ✅ ✅ ✅');
+      console.log('========================================\n');
     } catch (error) {
       this.logger.error(`sendEmailTemplate error ${error}`);
       throw new InternalServerErrorException(

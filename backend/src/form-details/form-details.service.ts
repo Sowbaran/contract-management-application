@@ -280,6 +280,21 @@ export class FormDetailsService {
     // biome-ignore lint/suspicious/noImplicitAnyLet: <explanation>
     let formRes;
     if (id) {
+      // Check if form exists and is in DRAFT status
+      const existingForm = await this.formDetailsRepo.findOneExisting({
+        _id: id,
+        active: true,
+      });
+      
+      if (!existingForm) {
+        throw new NotFoundException(`Form #${id} not found`);
+      }
+
+      // Ensure code is set from existing form if not provided in DTO
+      if (!createFormDto.code && existingForm.code) {
+        createFormDto.code = existingForm.code;
+      }
+      
       createFormDto.status = FormStatus.PENDING;
       const { formHistory, ...formDtoWithoutHistory } = createFormDto; // Exclude formHistory
 
@@ -319,6 +334,10 @@ export class FormDetailsService {
       if (!formRes) {
         throw new NotFoundException(`Form #${id} not found`);
       }
+      
+      this.logger.log(
+        `Draft form ${id} submitted - Status changed to PENDING, workflow initialized`,
+      );
     } else {
       formRes = await this.formDetailsRepo.create({
         ...createFormDto,
@@ -924,6 +943,10 @@ export class FormDetailsService {
         id.toString(),
       );
 
+      console.log('🔔 About to send resubmit email...');
+      console.log('Recipients:', userEmails);
+      console.log('Contract Code:', code);
+      
       await this.mailerCommonService.sendAssociateEmail(
         resubmitMailRedirectPath,
         userEmails,
@@ -931,6 +954,8 @@ export class FormDetailsService {
         EmailStatus.RESUBMIT,
         counterParty,
       );
+      
+      console.log('✅ Resubmit email sent successfully!');
     }
     return { message: "Form has been resubmitted successfully!" };
   }

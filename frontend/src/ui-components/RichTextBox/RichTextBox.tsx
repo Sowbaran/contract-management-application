@@ -20,6 +20,9 @@ export const RichTextBox = forwardRef<RichTextBoxRef, RichTextBoxProps>(
       },
     }));
 
+    // Ensure value is always defined to prevent uncontrolled to controlled warning
+    const safeValue = value ?? "";
+
     return (
       <div className="">
         <link
@@ -43,7 +46,7 @@ export const RichTextBox = forwardRef<RichTextBoxRef, RichTextBoxProps>(
               userOnly: true,
             },
           }}
-          value={value}
+          value={safeValue}
           onChange={onChange}
           {...props}
         />

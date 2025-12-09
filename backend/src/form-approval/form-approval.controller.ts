@@ -66,70 +66,72 @@ export class FormApprovalController {
     );
   }
 
-  @Post("callback")
-  @BypassAuth()
-  @ApiResponse({
-    status: 200,
-    description: "The handleCallback has been hit successfully",
-    type: CallbackMessageDto,
-  })
-  @ApiOperation({
-    operationId: "handleCallBack",
-    summary: "Handle Call Back",
-  })
-  async handleCallback(
-    @Body() body: EnvelopeDetailsDto,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    @Headers() headers: any,
-  ): Promise<CallbackMessageDto> {
-    const signature = headers["x-signature"];
-    this.logger.log(
-      `Hit signature callback controller x-signature, ${signature}`,
-    );
-    this.logger.log(`${body}`);
-    if (!signature) {
-      this.logger.error("Forbidden - Missing signature");
-      throw new HttpException(
-        "Forbidden - Missing signature",
-        HttpStatus.FORBIDDEN,
-      );
-    }
-    return await this.formApprovalService.formCompletionFlow(body, signature);
-  }
+  // DOCUSIGN CALLBACK ENDPOINT COMMENTED OUT - Not needed without DocuSign
+  // @Post("callback")
+  // @BypassAuth()
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "The handleCallback has been hit successfully",
+  //   type: CallbackMessageDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "handleCallBack",
+  //   summary: "Handle Call Back",
+  // })
+  // async handleCallback(
+  //   @Body() body: EnvelopeDetailsDto,
+  //   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  //   @Headers() headers: any,
+  // ): Promise<CallbackMessageDto> {
+  //   const signature = headers["x-signature"];
+  //   this.logger.log(
+  //     `Hit signature callback controller x-signature, ${signature}`,
+  //   );
+  //   this.logger.log(`${body}`);
+  //   if (!signature) {
+  //     this.logger.error("Forbidden - Missing signature");
+  //     throw new HttpException(
+  //       "Forbidden - Missing signature",
+  //       HttpStatus.FORBIDDEN,
+  //     );
+  //   }
+  //   return await this.formApprovalService.formCompletionFlow(body, signature);
+  // }
 
-  @Post("/docusignRetrigger/:id")
-  @ApiResponse({
-    status: 200,
-    description: "Esign retriggerd ",
-    type: RetriggerResponseDto,
-  })
-  @ApiOperation({
-    operationId: "docusignRetrigger",
-    summary: "Docusign Retrigger",
-  })
-  async docusignRetrigger(
-    @Req() request: AuthenticatedRequest,
-    @Query() queryParams: GetRetriggerQueryParamsDto,
-    @Param() id: GetRetriggerIdDto,
-  ) {
-    const formId = id.id;
-    let emailId = request.user.preferred_username;
-    if (
-      process.env.ENVIRONMENT === "local" ||
-      process.env.ENVIRONMENT === "dev"
-    ) {
-      emailId = queryParams.emailId;
-    }
-    this.logger.log(`Docusign Retrigger controller- ${emailId}`);
-    const moduleId = queryParams.moduleId;
-    const type = queryParams.type;
-    return await this.formApprovalService.docusignRetrigger(
-      formId,
-      emailId,
-      moduleId,
-      type,
-    );
-  }
+  // DOCUSIGN RETRIGGER ENDPOINT COMMENTED OUT - Not needed without DocuSign
+  // @Post("/docusignRetrigger/:id")
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "Esign retriggerd ",
+  //   type: RetriggerResponseDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "docusignRetrigger",
+  //   summary: "Docusign Retrigger",
+  // })
+  // async docusignRetrigger(
+  //   @Req() request: AuthenticatedRequest,
+  //   @Query() queryParams: GetRetriggerQueryParamsDto,
+  //   @Param() id: GetRetriggerIdDto,
+  // ) {
+  //   const formId = id.id;
+  //   let emailId = request.user.preferred_username;
+  //   if (
+  //     process.env.ENVIRONMENT === "local" ||
+  //     process.env.ENVIRONMENT === "dev"
+  //   ) {
+  //     emailId = queryParams.emailId;
+  //   }
+  //   this.logger.log(`Docusign Retrigger controller- ${emailId}`);
+  //   const moduleId = queryParams.moduleId;
+  //   const type = queryParams.type;
+  //   return await this.formApprovalService.docusignRetrigger(
+  //     formId,
+  //     emailId,
+  //     moduleId,
+  //     type,
+  //   );
+  // }
 
   @Post("headcount")
   @ApiResponse({

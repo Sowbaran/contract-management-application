@@ -4,7 +4,7 @@ import { EmailService } from "../email/email.service";
 export class MailerCommonService {
   private baseUrl: string;
   constructor(private readonly emailService: EmailService) {
-    this.baseUrl = process.env.FRONTEND_BASE_URL || "";
+    this.baseUrl = process.env.FRONTEND_BASE_URL || "https://forms.nrl.com.au";
   }
   //Your request has been rejected at {workflow approval stage} due to the following reason {last comment}.
   async sendHeadCountAssociateEmail(
@@ -204,6 +204,14 @@ export class MailerCommonService {
       <br/> Contract Approval System`;
     }
 
+    console.log('========================================');
+    console.log('SENDING ASSOCIATE EMAIL');
+    console.log('Type:', type);
+    console.log('Code:', code);
+    console.log('Recipients:', userEmails);
+    console.log('Subject:', subject);
+    console.log('========================================');
+    
     return await this.emailService.sendEmailWithTemplate(
       userEmails,
       subject,

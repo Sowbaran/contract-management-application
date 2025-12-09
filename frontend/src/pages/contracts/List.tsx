@@ -1208,7 +1208,7 @@ export const ContractFormListPage = () => {
                     id="startDate"
                     autoComplete="off"
                     showIcon
-                    calendarIconClassname="fill-primary-600 mr-2 mt-[2px]"
+                    calendarIconClassName="fill-primary-600 mr-2 mt-[2px]"
                     wrapperClassName="w-full"
                     className="w-full p-1 border rounded-md border-gray-400/60"
                     dateFormat={"dd/MM/yyyy"}
@@ -1229,7 +1229,7 @@ export const ContractFormListPage = () => {
                     id="endDate"
                     autoComplete="off"
                     showIcon
-                    calendarIconClassname="fill-primary-600 mr-2 mt-[2px]"
+                    calendarIconClassName="fill-primary-600 mr-2 mt-[2px]"
                     wrapperClassName="w-full"
                     className="w-full p-1 border rounded-md border-gray-400/60 disabled:bg-gray-200"
                     dateFormat={"dd/MM/yyyy"}
