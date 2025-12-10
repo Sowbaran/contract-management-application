@@ -386,125 +386,125 @@ export class FormDetailsController {
     return { message: "Data fix completed successfully." };
   }
 
-  @Post("/headcount/create")
-  @ApiResponse({
-    status: 200,
-    description: "New Form has been created successfully",
-    type: CreateHeadCountResponseDto,
-  })
-  @ApiOperation({
-    operationId: "createHeadcount",
-    summary: "Create Head Count",
-  })
-  async createHeadcount(
-    @Body() createHeadcountFormDto: CreateHeadcountFormDto,
-    @Req() request: AuthenticatedRequest,
-  ) {
-    if (
-      process.env.ENVIRONMENT !== "local" &&
-      process.env.ENVIRONMENT !== "dev"
-    ) {
-      createHeadcountFormDto.createdBy = request.user.preferred_username;
-    }
-    return await this.formDetailsService.createHeadcount(
-      createHeadcountFormDto,
-    );
-  }
+  // @Post("/headcount/create")
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "New Form has been created successfully",
+  //   type: CreateHeadCountResponseDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "createHeadcount",
+  //   summary: "Create Head Count",
+  // })
+  // async createHeadcount(
+  //   @Body() createHeadcountFormDto: CreateHeadcountFormDto,
+  //   @Req() request: AuthenticatedRequest,
+  // ) {
+  //   if (
+  //     process.env.ENVIRONMENT !== "local" &&
+  //     process.env.ENVIRONMENT !== "dev"
+  //   ) {
+  //     createHeadcountFormDto.createdBy = request.user.preferred_username;
+  //   }
+  //   return await this.formDetailsService.createHeadcount(
+  //     createHeadcountFormDto,
+  //   );
+  // }
 
-  @Get("/headcount/list/:email")
-  @ApiResponse({
-    status: 200,
-    description: "The list of form details has been successfully retrived.",
-    type: HeadcountFormListResponseDto,
-  })
-  @ApiOperation({
-    operationId: "getHeadcountFormList",
-    summary: "Get Headcount Form List",
-  })
-  async getHeadcountFormList(
-    @Req() request: AuthenticatedRequest,
-    @Query() queryParams: HeadcountRequestQueryDto,
-    @Param() emailId: HeadcountGetFormListParamsDto,
-  ) {
-    let email: string;
-    if (
-      process.env.ENVIRONMENT === "local" ||
-      process.env.ENVIRONMENT === "dev"
-    ) {
-      email = emailId.email;
-    } else {
-      email = request.user.preferred_username;
-    }
-    const type = queryParams.type;
-    const moduleId = queryParams.moduleId;
-    return await this.formDetailsService.getHeadcountFormList(
-      email,
-      type,
-      moduleId,
-    );
-  }
+  // @Get("/headcount/list/:email")
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "The list of form details has been successfully retrived.",
+  //   type: HeadcountFormListResponseDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "getHeadcountFormList",
+  //   summary: "Get Headcount Form List",
+  // })
+  // async getHeadcountFormList(
+  //   @Req() request: AuthenticatedRequest,
+  //   @Query() queryParams: HeadcountRequestQueryDto,
+  //   @Param() emailId: HeadcountGetFormListParamsDto,
+  // ) {
+  //   let email: string;
+  //   if (
+  //     process.env.ENVIRONMENT === "local" ||
+  //     process.env.ENVIRONMENT === "dev"
+  //   ) {
+  //     email = emailId.email;
+  //   } else {
+  //     email = request.user.preferred_username;
+  //   }
+  //   const type = queryParams.type;
+  //   const moduleId = queryParams.moduleId;
+  //   return await this.formDetailsService.getHeadcountFormList(
+  //     email,
+  //     type,
+  //     moduleId,
+  //   );
+  // }
 
-  @Get("/headcount/detail/:id")
-  @ApiResponse({
-    status: 200,
-    description: "The form details has been successfully retrived.",
-    type: GetHeadcountFormDetailResponseDto,
-  })
-  @ApiOperation({
-    operationId: "getHeadcountFormDetail",
-    summary: "Get Headcount Form Detail",
-  })
-  async getHeadcountFormDetail(
-    @Req() request: AuthenticatedRequest,
-    @Query() queryParams: HeadcountRequestQueryDto,
-    @Param() id: HeadcountGetFormDetailsQueryParamsDto,
-    @Query() emailId: HeadcountGetFormListParamsDto,
-  ) {
-    let email: string;
-    if (
-      process.env.ENVIRONMENT === "local" ||
-      process.env.ENVIRONMENT === "dev"
-    ) {
-      email = emailId.email;
-    } else {
-      email = request.user.preferred_username;
-    }
-    const type = queryParams.type;
-    const moduleId = queryParams.moduleId;
-    const resDate = await this.formDetailsService.getHeadcountFormDetail(
-      id.id,
-      email,
-      type,
-      moduleId,
-    );
-    return { data: resDate };
-  }
-  @Post("/headcount/resubmit")
-  @ApiResponse({
-    status: 200,
-    description: "Form has been resubmitted successfully!",
-    type: UpdateHeadCountResponseDto,
-  })
-  @ApiOperation({
-    operationId: "updateHeadCount",
-    summary: "Update Head Count",
-  })
-  async updateHeadCountForm(
-    @Req() request: AuthenticatedRequest,
-    @Body() updateFormDetailstDto: UpdateFormDetailsDto,
-  ) {
-    let emailId = request.user.preferred_username;
-    if (
-      process.env.ENVIRONMENT === "local" ||
-      process.env.ENVIRONMENT === "dev"
-    ) {
-      emailId = updateFormDetailstDto.createdBy;
-    }
-    return await this.formDetailsService.updateHeadCountForm(
-      updateFormDetailstDto,
-      emailId,
-    );
-  }
+  // @Get("/headcount/detail/:id")
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "The form details has been successfully retrived.",
+  //   type: GetHeadcountFormDetailResponseDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "getHeadcountFormDetail",
+  //   summary: "Get Headcount Form Detail",
+  // })
+  // async getHeadcountFormDetail(
+  //   @Req() request: AuthenticatedRequest,
+  //   @Query() queryParams: HeadcountRequestQueryDto,
+  //   @Param() id: HeadcountGetFormDetailsQueryParamsDto,
+  //   @Query() emailId: HeadcountGetFormListParamsDto,
+  // ) {
+  //   let email: string;
+  //   if (
+  //     process.env.ENVIRONMENT === "local" ||
+  //     process.env.ENVIRONMENT === "dev"
+  //   ) {
+  //     email = emailId.email;
+  //   } else {
+  //     email = request.user.preferred_username;
+  //   }
+  //   const type = queryParams.type;
+  //   const moduleId = queryParams.moduleId;
+  //   const resDate = await this.formDetailsService.getHeadcountFormDetail(
+  //     id.id,
+  //     email,
+  //     type,
+  //     moduleId,
+  //   );
+  //   return { data: resDate };
+  // }
+  // @Post("/headcount/resubmit")
+  // @ApiResponse({
+  //   status: 200,
+  //   description: "Form has been resubmitted successfully!",
+  //   type: UpdateHeadCountResponseDto,
+  // })
+  // @ApiOperation({
+  //   operationId: "updateHeadCount",
+  //   summary: "Update Head Count",
+  // })
+  // async updateHeadCountForm(
+  //   @Req() request: AuthenticatedRequest,
+  //   @Body() updateFormDetailstDto: UpdateFormDetailsDto,
+  // ) {
+  //   let emailId = request.user.preferred_username;
+  //   if (
+  //     process.env.ENVIRONMENT === "local" ||
+  //     process.env.ENVIRONMENT === "dev"
+  //   ) {
+  //     emailId = updateFormDetailstDto.createdBy;
+  //   }
+  //   return await this.formDetailsService.updateHeadCountForm(
+  //     updateFormDetailstDto,
+  //     emailId,
+  //   );
+  // }
 
   @ApiResponse({
     status: 200,

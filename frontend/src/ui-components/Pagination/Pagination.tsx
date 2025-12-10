@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/20/solid";
-import { FC } from "react";
+import { FC, useMemo } from "react";
 import { Button } from "../Button";
 import { Select } from "../Select";
 import { PaginationProps } from "./types";
@@ -22,6 +22,12 @@ export const Pagination: FC<PaginationProps> = ({
   if (endRecord > totalRowCount) {
     endRecord = totalRowCount;
   }
+
+  // Memoize filtered options to prevent creating new array on every render
+  const filteredRowOptions = useMemo(
+    () => rowOptions.filter(it => Number.parseInt(it.value) <= totalRowCount),
+    [rowOptions, totalRowCount]
+  );
 
   const handlePageChange = (newPage: number) => {
     const newStart = (newPage - 1) * rowPerPage;
@@ -118,7 +124,7 @@ export const Pagination: FC<PaginationProps> = ({
           <span className="mr-2 text-sm font-semibold">Rows:</span>
           <Select
             size="sm"
-            options={rowOptions.filter(it => Number.parseInt(it.value) <= totalRowCount)}
+            options={filteredRowOptions}
             value={{ label: rowPerPage.toString(), value: rowPerPage.toString() }}
             className="min-w-[60px]"
             buttonStyle={`${props?.rowButtonStyle}`}

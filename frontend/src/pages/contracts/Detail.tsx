@@ -2207,7 +2207,7 @@ export function ContractDetailPage() {
               {/* Right-aligned button */}
               <Button
                 leftIcon={<ArrowLeftIcon className="w-3 h-3" />}
-                className="justify-center ml-auto w-16 h-7 mr-1 bg-green-600 text-white font-medium hover:bg-gray-500 hover:border-gray-500" // Pushes button to the right
+                className="justify-center ml-auto w-16 h-7 mr-1 bg-[#632b50] text-white font-medium hover:bg-[#632b50] hover:border-[#632b50]" // Pushes button to the right
                 //variant="primary"
                 size="md"
                 title="Back"

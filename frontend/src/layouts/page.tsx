@@ -112,12 +112,19 @@ export function PageLayout(props: PageLayoutProps) {
           <ToasterProvider />
           <div className="mt-28 sm:mt-[4.5rem] h-[calc(100vh-7rem)] sm:h-[calc(100vh-4.5rem)]">
             {!currentPath || currentPath?.pathname === "/" ? (
-              data.data?.modules?.[0]?.code === "contract" ? (
-                <ContractFormListPage />
-              ) : data.data?.modules?.[0]?.code === "headcount" ? (
-                <HeadCountListPage />
+              data.data?.modules && data.data.modules.length > 0 ? (
+                data.data.modules[0]?.code === "contract" ? (
+                  <ContractFormListPage />
+                ) : data.data.modules[0]?.code === "headcount" ? (
+                  <HeadCountListPage />
+                ) : (
+                  <h1 className="text-black font-medium">Module Not Found</h1>
+                )
               ) : (
-                <h1 className="text-black font-medium">Module Not Found</h1>
+                <div className="flex flex-col items-center justify-center h-full">
+                  <h1 className="text-black font-medium text-xl mb-2">No Modules Assigned</h1>
+                  <p className="text-gray-600">This user does not have any modules assigned. Please contact an administrator.</p>
+                </div>
               )
             ) : (
               props.children

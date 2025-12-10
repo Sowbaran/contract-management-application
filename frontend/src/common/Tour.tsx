@@ -138,7 +138,7 @@ const Tour = () => {
             borderRadius: 6,
           },
           buttonNext: {
-            backgroundColor: "rgb(22, 163, 74)"
+            backgroundColor: "#632b50"
           },
           buttonBack: {
             borderStyle: "solid",

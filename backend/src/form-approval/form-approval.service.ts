@@ -806,334 +806,330 @@ export class FormApprovalService implements OnModuleInit {
   //   }
   // }
 
-  async headCountFormApproval(
-    updateFormApprovalDto: UpdateFormApprovalDto,
-    userEmailId: string,
-  ): Promise<FormMessageDto> {
-    const id = updateFormApprovalDto.formId;
-    const emailId = userEmailId;
-    const status = updateFormApprovalDto.status;
-    const comments = updateFormApprovalDto.comments;
-    const headOfPnCFinalApproverFlag =
-      updateFormApprovalDto.isHeadOfPnCFinalApprover;
-    const mailRedirectPath = updateFormApprovalDto.mailRedirectPath;
-    const moduleId = updateFormApprovalDto.moduleId;
-
-    if (!Object.values(FormApprovlValidation).includes(status)) {
-      throw new BadRequestException("Invalid Status");
-    }
-
-    const options = { select: "code -_id" };
-    const formModuleCode = await this.formModuleRepository.findById(
-      moduleId,
-      options,
-    );
-    if (!formModuleCode) {
-      throw new NotFoundException(`Module #${moduleId} not found`);
-    }
-    const { code: moduleCode } = formModuleCode;
-    const moduleType = moduleCode.toUpperCase() as keyof typeof PermissionCodes;
-    const userDetails = await this.usersRepo.findOneExisting({
-      email: emailId,
-      status: true,
-    });
-    const departments = userDetails?.departments || [];
-    this.logger.log(
-      `headCount Form approve userDetails departments- ${userDetails ? JSON.stringify(userDetails.departments) : ""}`,
-    );
-    const permissionCode = this.helperService.getPermissionCode(
-      TabRequest.APPROVEREQUEST,
-      moduleType,
-    );
-    this.logger.log(
-      `Headcount Module Code: ${formModuleCode.code}, Permission Code: ${permissionCode}`,
-    );
-
-    const { queryCriteria, isAllAccess } =
-      await this.helperService.validateUserPermissions(
-        emailId,
-        TabRequest.APPROVEREQUEST,
-        departments,
-        moduleCode,
-        permissionCode,
-        moduleId,
-        id.toString(),
-      );
-
-    const formDetailsModels =
-      await this.formDetailsRepo.findOneExisting(queryCriteria);
-
-    if (formDetailsModels) {
-      const workflowId = formDetailsModels.workflow;
-      const code = formDetailsModels.code;
-      const department = formDetailsModels.department;
-      const userEmails = formDetailsModels.createdBy;
-      let createdBy = userEmails;
-      const departmentName = formDetailsModels.departmentName;
-      const workflowName = formDetailsModels.workflowName;
-      const workflowOrder = formDetailsModels.workflowOrder;
-      // const roleReportingEmail = (formDetailsModels.formInfo as any)
-      //   .role_reporting_email;
-      const roleReportingEmail = (
-        formDetailsModels.formInfo as { role_reporting_email: string }
-      ).role_reporting_email;
-      const options = { select: "code -_id" };
-      const formModuleCode = await this.formModuleRepository.findById(
-        moduleId,
-        options,
-      );
-
-      if (!formModuleCode) {
-        throw new NotFoundException(`Module #${moduleId} not found`);
-      }
-      const { code: moduleCode } = formModuleCode;
-      if (moduleCode !== ModuleCode.HEADCOUNTREQUEST) {
-        throw new NotFoundException(`Invalid Module`);
-      }
-      const deptDetails = {
-        departmentName: departmentName,
-        department: department,
-      };
-      //const roles = userDetails.roles;
-      let behalfApprover = false;
-      const framebehalfApproverText = `behalf of ${workflowName}`;
-      let workflowHistoryName = workflowName;
-
-      if (isAllAccess) {
-        behalfApprover = true;
-        if (userDetails) {
-          const rolesWithAccess = userDetails.departments
-            .flatMap((department) => department.roles)
-            .filter(
-              (role) =>
-                role.code === ROLECODES.SUPERADMIN ||
-                ROLECODES.HEADCOUNTMODULEADMIN,
-            )
-            .map((role) => role.name);
-
-          workflowHistoryName = rolesWithAccess.join(", ");
-        }
-      }
-
-      const approvarName = userDetails ? userDetails.name : "";
-      let nextWorkflowName: string;
-      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-      const queryCriteria: any = {};
-      //await this.workflowRepo.findById(workflowVersion);
-      const currentWorkflow = workflowOrder.find(
-        (item) => item.roleId.toString() === workflowId.toString(),
-      );
-      if (!currentWorkflow) {
-        throw new NotFoundException(`No Workflow Found.`);
-      }
-      let formMessage = "Form approved successfully!";
-      this.logger.log(
-        `Headcount Form Approval service name status is- ${approvarName} - ${status}`,
-      );
-      if (status !== FormStatus.REJECTED) {
-        this.logger.log(`Headcount form approver flow-code- ${code}`);
-        let isHeadOfPnCFinalApprover = false;
-        const nextWorkflow = workflowOrder.find(
-          (item: { level: number }) => item.level === currentWorkflow.level + 1,
-        );
-        if (nextWorkflow) {
-          this.logger.log(
-            `Headcount Next Workflow ${JSON.stringify(nextWorkflow)}`,
-          );
-          nextWorkflow.status = FormStatus.PENDING;
-          nextWorkflowName = nextWorkflow.name ? nextWorkflow.name : "";
-          const roleDetails = {
-            roleId: nextWorkflow.roleId,
-            roleName: nextWorkflow.name,
-            isSpecificDeptApprover: nextWorkflow.isSpecificDeptApprover,
-          };
-          const userEmails = await this.helperService.getNextApprovers(
-            deptDetails,
-            roleDetails,
-            moduleId,
-            code,
-            "headCountFormApproval",
-          );
-          if (userEmails.includes(createdBy)) {
-            createdBy = ""; // Set createdBy to an empty string if it matches any email in the userEmails array
-          }
-
-          isHeadOfPnCFinalApprover = nextWorkflow.isHeadOfPnCFinalApprover
-            ? nextWorkflow.isHeadOfPnCFinalApprover
-            : false; // this flag set true in last level of approver when the role is new or not in budget
-          queryCriteria.workflow = nextWorkflow.roleId;
-          queryCriteria.workflowName = nextWorkflowName;
-          const updateQuery = { _id: id };
-          const update = {
-            $set: {
-              "workflowOrder.$[currentLevel].status":
-                FormHistoryStatus.COMPLETED, //update workflowOrder status
-              "workflowOrder.$[nextLevel].status": FormHistoryStatus.PENDING,
-              ...queryCriteria,
-            },
-            $push: {
-              formHistory: {
-                approvedBy: emailId,
-                status: status,
-                workflow: workflowId,
-                workflowName: workflowHistoryName,
-                department: department,
-                departmentName: departmentName,
-                createdAt: Date.now(),
-                comments: comments,
-                ...(behalfApprover
-                  ? { behalfApprover: framebehalfApproverText }
-                  : {}), // Conditionally add behalfApprover
-              },
-            },
-          };
-          const arrayFilters = [
-            { "currentLevel.level": currentWorkflow.level },
-            { "nextLevel.level": nextWorkflow.level },
-          ];
-          const options = {
-            arrayFilters: arrayFilters,
-          };
-          await this.formDetailsRepo.findOneAndUpdate(
-            updateQuery,
-            update,
-            options,
-          );
-          this.logger.log(
-            `Headcount Form Approval updated in Db, email service will be initiated`,
-          );
-
-          const ccEmails: string[] = [];
-          // Add createdBy to the CC list if it's not empty
-          if (createdBy) {
-            ccEmails.push(createdBy);
-          }
-          // Add roleReportingEmail to the CC list if it's defined
-          if (roleReportingEmail && createdBy !== roleReportingEmail) {
-            ccEmails.push(roleReportingEmail);
-          }
-          let emailStatus = EmailStatus.PENDINGAPPROVAL;
-          if (isHeadOfPnCFinalApprover) {
-            emailStatus = EmailStatus.NEWROLE_OR_BUDGET_PENDINGAPPROVAL;
-          }
-          this.logger.log(
-            `Headcount Next approver Email is ${JSON.stringify(userEmails)}`,
-          );
-          await this.mailerCommonService.sendHeadCountAssociateEmail(
-            mailRedirectPath,
-            userEmails,
-            code,
-            emailStatus,
-            departmentName,
-            "",
-            ccEmails,
-          );
-        } else {
-          this.logger.log(`final approver headcount flow-code- ${code}`);
-          const historyStatus = FormHistoryStatus.COMPLETED;
-          const workflowOrderStatus = FormHistoryStatus.COMPLETED;
-
-          const ccEmails: string[] = [];
-          if (userEmails !== emailId) {
-            ccEmails.push(emailId);
-          }
-          queryCriteria.status = historyStatus;
-          await this.mailerCommonService.sendHeadCountAssociateEmail(
-            mailRedirectPath,
-            userEmails,
-            code,
-            historyStatus,
-            departmentName,
-            "",
-            ccEmails,
-          );
-
-          const updateQuery = {
-            _id: id,
-            "workflowOrder.level": currentWorkflow.level,
-          };
-          const update = {
-            $set: {
-              "workflowOrder.$.status": workflowOrderStatus,
-              ...queryCriteria,
-            },
-            $push: {
-              formHistory: {
-                approvedBy: emailId,
-                status: historyStatus,
-                workflow: workflowId,
-                workflowName: workflowHistoryName,
-                department: department,
-                departmentName: departmentName,
-                createdAt: Date.now(),
-                comments: comments,
-                isHeadOfPnCFinalApprover: headOfPnCFinalApproverFlag
-                  ? headOfPnCFinalApproverFlag
-                  : "",
-                ...(behalfApprover
-                  ? { behalfApprover: framebehalfApproverText }
-                  : {}), // Conditionally add behalfApprover
-              },
-            },
-          };
-          await this.formDetailsRepo.findOneAndUpdate(updateQuery, update);
-        }
-      } else {
-        this.logger.log(`Headcount Form will be enter rejection flow`);
-        formMessage = "Form has been rejected.";
-        const updateQuery = {
-          _id: id,
-          "workflowOrder.level": currentWorkflow.level,
-        };
-        const update = {
-          $set: {
-            "workflowOrder.$.status": FormHistoryStatus.REJECTED,
-            status: status,
-          },
-          $push: {
-            formHistory: {
-              approvedBy: emailId,
-              status: status,
-              workflow: workflowId,
-              workflowName: workflowHistoryName,
-              department: department,
-              departmentName: departmentName,
-              createdAt: Date.now(),
-              comments: comments,
-              ...(behalfApprover
-                ? { behalfApprover: framebehalfApproverText }
-                : {}), // Conditionally add behalfApprover
-            },
-          },
-        };
-
-        await this.formDetailsRepo.findOneAndUpdate(updateQuery, update);
-
-        const ccEmails: string[] = [];
-
-        // Add createdBy to the CC list if it's not empty
-        if (createdBy) {
-          ccEmails.push(createdBy);
-        }
-
-        // Add roleReportingEmail to the CC list if it's defined
-        if (roleReportingEmail && createdBy !== roleReportingEmail) {
-          ccEmails.push(roleReportingEmail);
-        }
-        await this.mailerCommonService.sendHeadCountAssociateEmail(
-          mailRedirectPath,
-          ccEmails,
-          code,
-          EmailStatus.REJECTED,
-          departmentName,
-          comments,
-        );
-      }
-      return { message: formMessage };
-    }
-
-    // if (!formDetailsModels) {
-    throw new NotFoundException(`Form #${id} not found`);
-    // }
-  }
+  // async headCountFormApproval(
+  //   updateFormApprovalDto: UpdateFormApprovalDto,
+  //   userEmailId: string,
+  // ): Promise<FormMessageDto> {
+  //   const id = updateFormApprovalDto.formId;
+  //   const emailId = userEmailId;
+  //   const status = updateFormApprovalDto.status;
+  //   const comments = updateFormApprovalDto.comments;
+  //   const headOfPnCFinalApproverFlag =
+  //     updateFormApprovalDto.isHeadOfPnCFinalApprover;
+  //   const mailRedirectPath = updateFormApprovalDto.mailRedirectPath;
+  //   const moduleId = updateFormApprovalDto.moduleId;
+  //
+  //   if (!Object.values(FormApprovlValidation).includes(status)) {
+  //     throw new BadRequestException("Invalid Status");
+  //   }
+  //
+  //   const options = { select: "code -_id" };
+  //   const formModuleCode = await this.formModuleRepository.findById(
+  //     moduleId,
+  //     options,
+  //   );
+  //   if (!formModuleCode) {
+  //     throw new NotFoundException(`Module #${moduleId} not found`);
+  //   }
+  //   const { code: moduleCode } = formModuleCode;
+  //   const moduleType = moduleCode.toUpperCase() as keyof typeof PermissionCodes;
+  //   const userDetails = await this.usersRepo.findOneExisting({
+  //     email: emailId,
+  //     status: true,
+  //   });
+  //   const departments = userDetails?.departments || [];
+  //   this.logger.log(
+  //     `headCount Form approve userDetails departments- ${userDetails ? JSON.stringify(userDetails.departments) : ""}`,
+  //   );
+  //   const permissionCode = this.helperService.getPermissionCode(
+  //     TabRequest.APPROVEREQUEST,
+  //     moduleType,
+  //   );
+  //   this.logger.log(
+  //     `Headcount Module Code: ${formModuleCode.code}, Permission Code: ${permissionCode}`,
+  //   );
+  //
+  //   const { queryCriteria, isAllAccess } =
+  //     await this.helperService.validateUserPermissions(
+  //       emailId,
+  //       TabRequest.APPROVEREQUEST,
+  //       departments,
+  //       moduleCode,
+  //       permissionCode,
+  //       moduleId,
+  //       id.toString(),
+  //     );
+  //
+  //   const formDetailsModels =
+  //     await this.formDetailsRepo.findOneExisting(queryCriteria);
+  //
+  //   if (formDetailsModels) {
+  //     const workflowId = formDetailsModels.workflow;
+  //     const code = formDetailsModels.code;
+  //     const department = formDetailsModels.department;
+  //     const userEmails = formDetailsModels.createdBy;
+  //     let createdBy = userEmails;
+  //     const departmentName = formDetailsModels.departmentName;
+  //     const workflowName = formDetailsModels.workflowName;
+  //     const workflowOrder = formDetailsModels.workflowOrder;
+  //     const roleReportingEmail = (
+  //       formDetailsModels.formInfo as { role_reporting_email: string }
+  //     ).role_reporting_email;
+  //     const options = { select: "code -_id" };
+  //     const formModuleCode = await this.formModuleRepository.findById(
+  //       moduleId,
+  //       options,
+  //     );
+  //
+  //     if (!formModuleCode) {
+  //       throw new NotFoundException(`Module #${moduleId} not found`);
+  //     }
+  //     const { code: moduleCode } = formModuleCode;
+  //     if (moduleCode !== ModuleCode.HEADCOUNTREQUEST) {
+  //       throw new NotFoundException(`Invalid Module`);
+  //     }
+  //     const deptDetails = {
+  //       departmentName: departmentName,
+  //       department: department,
+  //     };
+  //     let behalfApprover = false;
+  //     const framebehalfApproverText = `behalf of ${workflowName}`;
+  //     let workflowHistoryName = workflowName;
+  //
+  //     if (isAllAccess) {
+  //       behalfApprover = true;
+  //       if (userDetails) {
+  //         const rolesWithAccess = userDetails.departments
+  //           .flatMap((department) => department.roles)
+  //           .filter(
+  //             (role) =>
+  //               role.code === ROLECODES.SUPERADMIN ||
+  //               ROLECODES.HEADCOUNTMODULEADMIN,
+  //           )
+  //           .map((role) => role.name);
+  //
+  //         workflowHistoryName = rolesWithAccess.join(", ");
+  //       }
+  //     }
+  //
+  //     const approvarName = userDetails ? userDetails.name : "";
+  //     let nextWorkflowName: string;
+  //     // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  //     const queryCriteria: any = {};
+  //     const currentWorkflow = workflowOrder.find(
+  //       (item) => item.roleId.toString() === workflowId.toString(),
+  //     );
+  //     if (!currentWorkflow) {
+  //       throw new NotFoundException(`No Workflow Found.`);
+  //     }
+  //     let formMessage = "Form approved successfully!";
+  //     this.logger.log(
+  //       `Headcount Form Approval service name status is- ${approvarName} - ${status}`,
+  //     );
+  //     if (status !== FormStatus.REJECTED) {
+  //       this.logger.log(`Headcount form approver flow-code- ${code}`);
+  //       let isHeadOfPnCFinalApprover = false;
+  //       const nextWorkflow = workflowOrder.find(
+  //         (item: { level: number }) => item.level === currentWorkflow.level + 1,
+  //       );
+  //       if (nextWorkflow) {
+  //         this.logger.log(
+  //           `Headcount Next Workflow ${JSON.stringify(nextWorkflow)}`,
+  //         );
+  //         nextWorkflow.status = FormStatus.PENDING;
+  //         nextWorkflowName = nextWorkflow.name ? nextWorkflow.name : "";
+  //         const roleDetails = {
+  //           roleId: nextWorkflow.roleId,
+  //           roleName: nextWorkflow.name,
+  //           isSpecificDeptApprover: nextWorkflow.isSpecificDeptApprover,
+  //         };
+  //         const userEmails = await this.helperService.getNextApprovers(
+  //           deptDetails,
+  //           roleDetails,
+  //           moduleId,
+  //           code,
+  //           "headCountFormApproval",
+  //         );
+  //         if (userEmails.includes(createdBy)) {
+  //           createdBy = ""; // Set createdBy to an empty string if it matches any email in the userEmails array
+  //         }
+  //
+  //         isHeadOfPnCFinalApprover = nextWorkflow.isHeadOfPnCFinalApprover
+  //           ? nextWorkflow.isHeadOfPnCFinalApprover
+  //           : false; // this flag set true in last level of approver when the role is new or not in budget
+  //         queryCriteria.workflow = nextWorkflow.roleId;
+  //         queryCriteria.workflowName = nextWorkflowName;
+  //         const updateQuery = { _id: id };
+  //         const update = {
+  //           $set: {
+  //             "workflowOrder.$[currentLevel].status":
+  //               FormHistoryStatus.COMPLETED, //update workflowOrder status
+  //             "workflowOrder.$[nextLevel].status": FormHistoryStatus.PENDING,
+  //             ...queryCriteria,
+  //           },
+  //           $push: {
+  //             formHistory: {
+  //               approvedBy: emailId,
+  //               status: status,
+  //               workflow: workflowId,
+  //               workflowName: workflowHistoryName,
+  //               department: department,
+  //               departmentName: departmentName,
+  //               createdAt: Date.now(),
+  //               comments: comments,
+  //               ...(behalfApprover
+  //                 ? { behalfApprover: framebehalfApproverText }
+  //                 : {}), // Conditionally add behalfApprover
+  //             },
+  //           },
+  //         };
+  //         const arrayFilters = [
+  //           { "currentLevel.level": currentWorkflow.level },
+  //           { "nextLevel.level": nextWorkflow.level },
+  //         ];
+  //         const options = {
+  //           arrayFilters: arrayFilters,
+  //         };
+  //         await this.formDetailsRepo.findOneAndUpdate(
+  //           updateQuery,
+  //           update,
+  //           options,
+  //         );
+  //         this.logger.log(
+  //           `Headcount Form Approval updated in Db, email service will be initiated`,
+  //         );
+  //
+  //         const ccEmails: string[] = [];
+  //         // Add createdBy to the CC list if it's not empty
+  //         if (createdBy) {
+  //           ccEmails.push(createdBy);
+  //         }
+  //         // Add roleReportingEmail to the CC list if it's defined
+  //         if (roleReportingEmail && createdBy !== roleReportingEmail) {
+  //           ccEmails.push(roleReportingEmail);
+  //         }
+  //         let emailStatus = EmailStatus.PENDINGAPPROVAL;
+  //         if (isHeadOfPnCFinalApprover) {
+  //           emailStatus = EmailStatus.NEWROLE_OR_BUDGET_PENDINGAPPROVAL;
+  //         }
+  //         this.logger.log(
+  //           `Headcount Next approver Email is ${JSON.stringify(userEmails)}`,
+  //         );
+  //         await this.mailerCommonService.sendHeadCountAssociateEmail(
+  //           mailRedirectPath,
+  //           userEmails,
+  //           code,
+  //           emailStatus,
+  //           departmentName,
+  //           "",
+  //           ccEmails,
+  //         );
+  //       } else {
+  //         this.logger.log(`final approver headcount flow-code- ${code}`);
+  //         const historyStatus = FormHistoryStatus.COMPLETED;
+  //         const workflowOrderStatus = FormHistoryStatus.COMPLETED;
+  //
+  //         const ccEmails: string[] = [];
+  //         if (userEmails !== emailId) {
+  //           ccEmails.push(emailId);
+  //         }
+  //         queryCriteria.status = historyStatus;
+  //         await this.mailerCommonService.sendHeadCountAssociateEmail(
+  //           mailRedirectPath,
+  //           userEmails,
+  //           code,
+  //           historyStatus,
+  //           departmentName,
+  //           "",
+  //           ccEmails,
+  //         );
+  //
+  //         const updateQuery = {
+  //           _id: id,
+  //           "workflowOrder.level": currentWorkflow.level,
+  //         };
+  //         const update = {
+  //           $set: {
+  //             "workflowOrder.$.status": workflowOrderStatus,
+  //             ...queryCriteria,
+  //           },
+  //           $push: {
+  //             formHistory: {
+  //               approvedBy: emailId,
+  //               status: historyStatus,
+  //               workflow: workflowId,
+  //               workflowName: workflowHistoryName,
+  //               department: department,
+  //               departmentName: departmentName,
+  //               createdAt: Date.now(),
+  //               comments: comments,
+  //               isHeadOfPnCFinalApprover: headOfPnCFinalApproverFlag
+  //                 ? headOfPnCFinalApproverFlag
+  //                 : "",
+  //               ...(behalfApprover
+  //                 ? { behalfApprover: framebehalfApproverText }
+  //                 : {}), // Conditionally add behalfApprover
+  //             },
+  //           },
+  //         };
+  //         await this.formDetailsRepo.findOneAndUpdate(updateQuery, update);
+  //       }
+  //     } else {
+  //       this.logger.log(`Headcount Form will be enter rejection flow`);
+  //       formMessage = "Form has been rejected.";
+  //       const updateQuery = {
+  //         _id: id,
+  //         "workflowOrder.level": currentWorkflow.level,
+  //       };
+  //       const update = {
+  //         $set: {
+  //           "workflowOrder.$.status": FormHistoryStatus.REJECTED,
+  //           status: status,
+  //         },
+  //         $push: {
+  //           formHistory: {
+  //             approvedBy: emailId,
+  //             status: status,
+  //             workflow: workflowId,
+  //             workflowName: workflowHistoryName,
+  //             department: department,
+  //             departmentName: departmentName,
+  //             createdAt: Date.now(),
+  //             comments: comments,
+  //             ...(behalfApprover
+  //               ? { behalfApprover: framebehalfApproverText }
+  //               : {}), // Conditionally add behalfApprover
+  //           },
+  //         },
+  //       };
+  //
+  //       await this.formDetailsRepo.findOneAndUpdate(updateQuery, update);
+  //
+  //       const ccEmails: string[] = [];
+  //
+  //       // Add createdBy to the CC list if it's not empty
+  //       if (createdBy) {
+  //         ccEmails.push(createdBy);
+  //       }
+  //
+  //       // Add roleReportingEmail to the CC list if it's defined
+  //       if (roleReportingEmail && createdBy !== roleReportingEmail) {
+  //         ccEmails.push(roleReportingEmail);
+  //       }
+  //       await this.mailerCommonService.sendHeadCountAssociateEmail(
+  //         mailRedirectPath,
+  //         ccEmails,
+  //         code,
+  //         EmailStatus.REJECTED,
+  //         departmentName,
+  //         comments,
+  //       );
+  //     }
+  //     return { message: formMessage };
+  //   }
+  //
+  //   if (!formDetailsModels) {
+  //     throw new NotFoundException(`Form #${id} not found`);
+  //   }
+  // }
 }

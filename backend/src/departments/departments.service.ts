@@ -278,7 +278,7 @@ export class DepartmentsService {
       ROLECODES.CEO,
       ROLECODES.SUPERADMIN,
       ROLECODES.VENDORMODULEADMIN,
-      ROLECODES.HEADCOUNTMODULEADMIN,
+      // ROLECODES.HEADCOUNTMODULEADMIN,
     ];
     // Fetch all departments
     const departments = await this.departmentsRepo.find(

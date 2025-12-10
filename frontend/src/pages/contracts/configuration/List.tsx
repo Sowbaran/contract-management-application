@@ -210,7 +210,7 @@ export const ContractConfigurationListPage = () => {
         </span>
         <Button
           leftIcon={<PlusCircleIcon className="text-white w-5 h-5" />}
-          variant="green"
+          className="bg-[#632b50] text-white font-medium hover:bg-[#632b50] hover:border-[#632b50]"
           size="sm"
           label="Update Configuration"
           onClick={() => updateConfiguration()}

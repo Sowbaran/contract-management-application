@@ -44,7 +44,7 @@ import {
   TabRequest,
   PermissionCodes,
   ROLECODES,
-  headcountFilterStatus,
+  // headcountFilterStatus,
   financeFilterStatus,
   DocusignStatus,
   ApiCode,
@@ -984,7 +984,8 @@ export class FormDetailsService {
       throw new NotFoundException("Module Not Found. Kindly contact Admin");
     }
     const { code: moduleCode } = formModulesDetails;
-    let status = Object.values(headcountFilterStatus);
+    // let status = Object.values(headcountFilterStatus);
+    let status: string[] = [];
     if (moduleCode === ModuleCode.VENDORCONTRACT) {
       status = Object.values(financeFilterStatus);
       if (type === TabRequest.MYREQUEST) {
@@ -1028,7 +1029,7 @@ export class FormDetailsService {
       );
       const isAllAccess =
         roleCheckResult.isSuperAdmin || roleCheckResult.isModuleAdmin;
-      const isAdditionalAccess = roleCheckResult.isFinanceAdmin;
+      const isAdditionalAccess = roleCheckResult.isFinanceAdmin || roleCheckResult.isLegalAdmin;
 
       if (type === TabRequest.TEAMREQUEST) {
         if (isAllAccess || isAdditionalAccess) {
@@ -1550,259 +1551,259 @@ export class FormDetailsService {
     }
   }
 
-  async createHeadcount(
-    createHeadcountFormDto: CreateHeadcountFormDto,
-  ): Promise<CreateUpdateFormResponseDto> {
-    const { formModulesDetails, currentWorkflow } =
-      await this.validateModuleAndWorkflow(createHeadcountFormDto.moduleId);
-    await this.validateDuplicateForm(createHeadcountFormDto.code);
-    const userRoles = await this.getUserRoles(
-      createHeadcountFormDto.createdBy,
-      createHeadcountFormDto.department,
-      createHeadcountFormDto.moduleId,
-    );
+  // async createHeadcount(
+  //   createHeadcountFormDto: CreateHeadcountFormDto,
+  // ): Promise<CreateUpdateFormResponseDto> {
+  //   const { formModulesDetails, currentWorkflow } =
+  //     await this.validateModuleAndWorkflow(createHeadcountFormDto.moduleId);
+  //   await this.validateDuplicateForm(createHeadcountFormDto.code);
+  //   const userRoles = await this.getUserRoles(
+  //     createHeadcountFormDto.createdBy,
+  //     createHeadcountFormDto.department,
+  //     createHeadcountFormDto.moduleId,
+  //   );
+  //
+  //   const matchingWorkflows = this.getMatchingWorkflows(
+  //     currentWorkflow,
+  //     userRoles,
+  //   );
+  //
+  //   const workflowOrder = this.prepareHeadcountWorkflowOrder(
+  //     matchingWorkflows,
+  //     createHeadcountFormDto.formInfo,
+  //   );
+  //
+  //   Object.assign(createHeadcountFormDto, {
+  //     moduleCode: formModulesDetails.code,
+  //     workflow: matchingWorkflows[0].role,
+  //     workflowName: matchingWorkflows[0].name,
+  //     workflowVersion: currentWorkflow._id,
+  //   });
+  //
+  //   const formHistory = this.createFormHistory(createHeadcountFormDto);
+  //   // Get next approvers
+  //   const userEmails = await this.helperService.getNextApprovers(
+  //     {
+  //       departmentName: createHeadcountFormDto.departmentName,
+  //       department: createHeadcountFormDto.department,
+  //     },
+  //     {
+  //       roleId: matchingWorkflows[0].role,
+  //       roleName: matchingWorkflows[0].name,
+  //       isSpecificDeptApprover: matchingWorkflows[0].isSpecificDeptApprover,
+  //     },
+  //     createHeadcountFormDto.moduleId.toString(),
+  //     createHeadcountFormDto.code,
+  //     "createHeadcountForm",
+  //   );
+  //
+  //   // Create form
+  //   const formRes = await this.formDetailsRepo.create({
+  //     ...createHeadcountFormDto,
+  //     formHistory: [formHistory],
+  //     workflowOrder,
+  //   });
+  //
+  //   if (!formRes)
+  //     throw new InternalServerErrorException("Create New Form Error");
+  //
+  //   // Handle email sending
+  //   await this.sendApprovalEmails(
+  //     formRes,
+  //     createHeadcountFormDto,
+  //     userEmails,
+  //     EmailStatus.PENDINGAPPROVAL,
+  //   );
+  //   return { message: "Form has been submitted successfully!" };
+  // }
 
-    const matchingWorkflows = this.getMatchingWorkflows(
-      currentWorkflow,
-      userRoles,
-    );
+  // async getHeadcountFormList(
+  //   emailId: string,
+  //   type: string,
+  //   moduleId: string,
+  // ): Promise<HeadcountFormListResponseDto> {
+  //   const options = { select: "code -_id" };
+  //   const formModuleCode = await this.formModuleRepository.findById(
+  //     moduleId,
+  //     options,
+  //   );
+  //   if (!formModuleCode) {
+  //     throw new NotFoundException(`Module #${moduleId} not found`);
+  //   }
+  //   const { code: moduleCode } = formModuleCode;
+  //   if (moduleCode !== ModuleCode.HEADCOUNTREQUEST) {
+  //     throw new NotFoundException(`Invalid Module`);
+  //   }
+  //   const moduleType = moduleCode.toUpperCase() as keyof typeof PermissionCodes;
+  //   const userDetails = await this.usersRepo.findOneExisting({
+  //     email: emailId,
+  //     status: true,
+  //   });
+  //   const departments = userDetails?.departments || [];
+  //   this.logger.log(
+  //     `Headcount form List userDetails departments- ${userDetails ? JSON.stringify(userDetails.departments) : ""}`,
+  //   );
+  //   if (
+  //     (!userDetails || departments.length === 0) &&
+  //     type !== TabRequest.MYREQUEST
+  //   ) {
+  //     throw new ForbiddenException(`You do not have the required permissions`);
+  //   }
+  //
+  //   const permissionCode = this.helperService.getPermissionCode(
+  //     type,
+  //     moduleType,
+  //   );
+  //
+  //   this.logger.log(
+  //     `Module Code: ${formModuleCode.code}, Permission Code: ${permissionCode}`,
+  //   );
+  //
+  //   const { queryCriteria } = await this.helperService.validateUserPermissions(
+  //     emailId,
+  //     type,
+  //     departments,
+  //     moduleCode,
+  //     permissionCode,
+  //     moduleId,
+  //   );
+  //   this.logger.log(JSON.stringify(queryCriteria));
+  //   const sortCriteria = { _id: -1 };
+  //   const formDetailsModels = await this.formDetailsRepo.find(queryCriteria, {
+  //     select:
+  //       "_id moduleId code department departmentName formInfo.role_name workflow workflowName status createdBy createdAt",
+  //     sort: sortCriteria,
+  //   });
+  //   const totalRowCount = formDetailsModels.length;
+  //   return {
+  //     data: formDetailsModels,
+  //     meta: {
+  //       pagination: { totalRowCount },
+  //     },
+  //   };
+  // }
 
-    const workflowOrder = this.prepareHeadcountWorkflowOrder(
-      matchingWorkflows,
-      createHeadcountFormDto.formInfo,
-    );
+  // async getHeadcountFormDetail(
+  //   id: string,
+  //   emailId: string,
+  //   type: string,
+  //   moduleId: string,
+  // ): Promise<GetHeadcountFormDetailResponseDto> {
+  //   this.logger.log(`Hit Headcunt Form Detils Services`);
+  //   const formDetailsModels = await this.getCommonFormDetails(
+  //     id,
+  //     emailId,
+  //     type,
+  //     moduleId,
+  //     ModuleCode.HEADCOUNTREQUEST,
+  //   );
+  //   const { workflowOrder, departmentName, workflowName, formHistory } =
+  //     formDetailsModels;
+  //   const requesterName = formDetailsModels?.formInfo?.requester_name;
+  //   const requesterEmail = formDetailsModels?.formInfo?.requester_email;
+  //   let isHeadOfPnCFinalApproverFlag = false;
+  //   const workflowCount = workflowOrder.length - 1;
+  //   const currentStatus = workflowOrder[workflowCount].status;
+  //   if (
+  //     workflowOrder[workflowCount].isHeadOfPnCFinalApprover &&
+  //     currentStatus === FormHistoryStatus.PENDING
+  //   ) {
+  //     isHeadOfPnCFinalApproverFlag = true;
+  //   }
+  //   const data = {
+  //     ...formDetailsModels,
+  //     department: departmentName,
+  //     workflow: workflowName,
+  //     requesterName: requesterName,
+  //     requesterEmail: requesterEmail,
+  //     formHistory: formHistory || [],
+  //     workflowDetails: workflowOrder || [],
+  //     isHeadOfPnCFinalApprover: isHeadOfPnCFinalApproverFlag,
+  //   };
+  //
+  //   const formDetail = plainToInstance(GetHeadcountFormDetailResponseDto, data);
+  //   return formDetail;
+  // }
 
-    Object.assign(createHeadcountFormDto, {
-      moduleCode: formModulesDetails.code,
-      workflow: matchingWorkflows[0].role,
-      workflowName: matchingWorkflows[0].name,
-      workflowVersion: currentWorkflow._id,
-    });
-
-    const formHistory = this.createFormHistory(createHeadcountFormDto);
-    // Get next approvers
-    const userEmails = await this.helperService.getNextApprovers(
-      {
-        departmentName: createHeadcountFormDto.departmentName,
-        department: createHeadcountFormDto.department,
-      },
-      {
-        roleId: matchingWorkflows[0].role,
-        roleName: matchingWorkflows[0].name,
-        isSpecificDeptApprover: matchingWorkflows[0].isSpecificDeptApprover,
-      },
-      createHeadcountFormDto.moduleId.toString(),
-      createHeadcountFormDto.code,
-      "createHeadcountForm",
-    );
-
-    // Create form
-    const formRes = await this.formDetailsRepo.create({
-      ...createHeadcountFormDto,
-      formHistory: [formHistory],
-      workflowOrder,
-    });
-
-    if (!formRes)
-      throw new InternalServerErrorException("Create New Form Error");
-
-    // Handle email sending
-    await this.sendApprovalEmails(
-      formRes,
-      createHeadcountFormDto,
-      userEmails,
-      EmailStatus.PENDINGAPPROVAL,
-    );
-    return { message: "Form has been submitted successfully!" };
-  }
-
-  async getHeadcountFormList(
-    emailId: string,
-    type: string,
-    moduleId: string,
-  ): Promise<HeadcountFormListResponseDto> {
-    const options = { select: "code -_id" };
-    const formModuleCode = await this.formModuleRepository.findById(
-      moduleId,
-      options,
-    );
-    if (!formModuleCode) {
-      throw new NotFoundException(`Module #${moduleId} not found`);
-    }
-    const { code: moduleCode } = formModuleCode;
-    if (moduleCode !== ModuleCode.HEADCOUNTREQUEST) {
-      throw new NotFoundException(`Invalid Module`);
-    }
-    const moduleType = moduleCode.toUpperCase() as keyof typeof PermissionCodes;
-    const userDetails = await this.usersRepo.findOneExisting({
-      email: emailId,
-      status: true,
-    });
-    const departments = userDetails?.departments || [];
-    this.logger.log(
-      `Headcount form List userDetails departments- ${userDetails ? JSON.stringify(userDetails.departments) : ""}`,
-    );
-    if (
-      (!userDetails || departments.length === 0) &&
-      type !== TabRequest.MYREQUEST
-    ) {
-      throw new ForbiddenException(`You do not have the required permissions`);
-    }
-
-    const permissionCode = this.helperService.getPermissionCode(
-      type,
-      moduleType,
-    );
-
-    this.logger.log(
-      `Module Code: ${formModuleCode.code}, Permission Code: ${permissionCode}`,
-    );
-
-    const { queryCriteria } = await this.helperService.validateUserPermissions(
-      emailId,
-      type,
-      departments,
-      moduleCode,
-      permissionCode,
-      moduleId,
-    );
-    this.logger.log(JSON.stringify(queryCriteria));
-    const sortCriteria = { _id: -1 };
-    const formDetailsModels = await this.formDetailsRepo.find(queryCriteria, {
-      select:
-        "_id moduleId code department departmentName formInfo.role_name workflow workflowName status createdBy createdAt",
-      sort: sortCriteria,
-    });
-    const totalRowCount = formDetailsModels.length;
-    return {
-      data: formDetailsModels,
-      meta: {
-        pagination: { totalRowCount },
-      },
-    };
-  }
-
-  async getHeadcountFormDetail(
-    id: string,
-    emailId: string,
-    type: string,
-    moduleId: string,
-  ): Promise<GetHeadcountFormDetailResponseDto> {
-    this.logger.log(`Hit Headcunt Form Detils Services`);
-    const formDetailsModels = await this.getCommonFormDetails(
-      id,
-      emailId,
-      type,
-      moduleId,
-      ModuleCode.HEADCOUNTREQUEST,
-    );
-    const { workflowOrder, departmentName, workflowName, formHistory } =
-      formDetailsModels;
-    const requesterName = formDetailsModels?.formInfo?.requester_name;
-    const requesterEmail = formDetailsModels?.formInfo?.requester_email;
-    let isHeadOfPnCFinalApproverFlag = false;
-    const workflowCount = workflowOrder.length - 1;
-    const currentStatus = workflowOrder[workflowCount].status;
-    if (
-      workflowOrder[workflowCount].isHeadOfPnCFinalApprover &&
-      currentStatus === FormHistoryStatus.PENDING
-    ) {
-      isHeadOfPnCFinalApproverFlag = true;
-    }
-    const data = {
-      ...formDetailsModels,
-      department: departmentName,
-      workflow: workflowName,
-      requesterName: requesterName,
-      requesterEmail: requesterEmail,
-      formHistory: formHistory || [],
-      workflowDetails: workflowOrder || [],
-      isHeadOfPnCFinalApprover: isHeadOfPnCFinalApproverFlag,
-    };
-
-    const formDetail = plainToInstance(GetHeadcountFormDetailResponseDto, data);
-    return formDetail;
-  }
-
-  async updateHeadCountForm(
-    updateFormDetailsDto: UpdateFormDetailsDto,
-    userEmailId: string,
-  ): Promise<UpdateHeadCountResponseDto> {
-    // Fetch existing form
-    const formDetails = await this.formDetailsRepo.findOneExisting({
-      _id: updateFormDetailsDto.formId,
-      createdBy: userEmailId,
-      moduleId: updateFormDetailsDto.moduleId,
-      active: true,
-    });
-
-    if (!formDetails)
-      throw new NotFoundException(
-        `User #${userEmailId} not allowed to perform this action`,
-      );
-
-    // Prepare updated workflow details
-    const workflowOrder = this.prepareHeadcountWorkflowOrder(
-      formDetails.workflowOrder,
-      updateFormDetailsDto.formInfo,
-    );
-    const level1Order = workflowOrder.find((order) => order.level === 1);
-    if (!level1Order) throw new NotFoundException(`Level 1 Order not found`);
-
-    // Prepare update query
-    const updateQuery = { _id: updateFormDetailsDto.formId };
-    const updateData = {
-      $set: {
-        status: FormStatus.PENDING,
-        formInfo: updateFormDetailsDto.formInfo,
-        attachments: updateFormDetailsDto.attachments,
-        workflow: level1Order.roleId,
-        workflowName: level1Order.name,
-        workflowOrder,
-      },
-      $push: {
-        formHistory: this.createFormHistory({
-          ...updateFormDetailsDto,
-          workflow: level1Order.roleId,
-          workflowName: level1Order.name,
-        }),
-      },
-    };
-
-    // Get next approvers
-    const userEmails = await this.helperService.getNextApprovers(
-      {
-        departmentName: formDetails.departmentName,
-        department: formDetails.department,
-      },
-      {
-        roleId: level1Order.roleId,
-        roleName: level1Order.name,
-        isSpecificDeptApprover: level1Order.isSpecificDeptApprover,
-      },
-      updateFormDetailsDto.moduleId.toString(),
-      updateFormDetailsDto.code,
-      "updateHeadcountForm",
-    );
-    // Update form
-    const updatedForm = await this.formDetailsRepo.findOneAndUpdate(
-      updateQuery,
-      updateData,
-    );
-    if (!updatedForm)
-      throw new NotFoundException(
-        `Form #${updateFormDetailsDto.formId} not found`,
-      );
-
-    await this.sendApprovalEmails(
-      updatedForm,
-      updateFormDetailsDto,
-      userEmails,
-      EmailStatus.RESUBMIT,
-    );
-
-    return { message: "Form has been resubmitted successfully!" };
-  }
+  // async updateHeadCountForm(
+  //   updateFormDetailsDto: UpdateFormDetailsDto,
+  //   userEmailId: string,
+  // ): Promise<UpdateHeadCountResponseDto> {
+  //   // Fetch existing form
+  //   const formDetails = await this.formDetailsRepo.findOneExisting({
+  //     _id: updateFormDetailsDto.formId,
+  //     createdBy: userEmailId,
+  //     moduleId: updateFormDetailsDto.moduleId,
+  //     active: true,
+  //   });
+  //
+  //   if (!formDetails)
+  //     throw new NotFoundException(
+  //       `User #${userEmailId} not allowed to perform this action`,
+  //     );
+  //
+  //   // Prepare updated workflow details
+  //   const workflowOrder = this.prepareHeadcountWorkflowOrder(
+  //     formDetails.workflowOrder,
+  //     updateFormDetailsDto.formInfo,
+  //   );
+  //   const level1Order = workflowOrder.find((order) => order.level === 1);
+  //   if (!level1Order) throw new NotFoundException(`Level 1 Order not found`);
+  //
+  //   // Prepare update query
+  //   const updateQuery = { _id: updateFormDetailsDto.formId };
+  //   const updateData = {
+  //     $set: {
+  //       status: FormStatus.PENDING,
+  //       formInfo: updateFormDetailsDto.formInfo,
+  //       attachments: updateFormDetailsDto.attachments,
+  //       workflow: level1Order.roleId,
+  //       workflowName: level1Order.name,
+  //       workflowOrder,
+  //     },
+  //     $push: {
+  //       formHistory: this.createFormHistory({
+  //         ...updateFormDetailsDto,
+  //         workflow: level1Order.roleId,
+  //         workflowName: level1Order.name,
+  //       }),
+  //     },
+  //   };
+  //
+  //   // Get next approvers
+  //   const userEmails = await this.helperService.getNextApprovers(
+  //     {
+  //       departmentName: formDetails.departmentName,
+  //       department: formDetails.department,
+  //     },
+  //     {
+  //       roleId: level1Order.roleId,
+  //       roleName: level1Order.name,
+  //       isSpecificDeptApprover: level1Order.isSpecificDeptApprover,
+  //     },
+  //     updateFormDetailsDto.moduleId.toString(),
+  //     updateFormDetailsDto.code,
+  //     "updateHeadcountForm",
+  //   );
+  //   // Update form
+  //   const updatedForm = await this.formDetailsRepo.findOneAndUpdate(
+  //     updateQuery,
+  //     updateData,
+  //   );
+  //   if (!updatedForm)
+  //     throw new NotFoundException(
+  //       `Form #${updateFormDetailsDto.formId} not found`,
+  //     );
+  //
+  //   await this.sendApprovalEmails(
+  //     updatedForm,
+  //     updateFormDetailsDto,
+  //     userEmails,
+  //     EmailStatus.RESUBMIT,
+  //   );
+  //
+  //   return { message: "Form has been resubmitted successfully!" };
+  // }
 
   //Headcount Create and Resubmit common code
   private async validateModuleAndWorkflow(moduleId: Types.ObjectId) {
@@ -1813,8 +1814,8 @@ export class FormDetailsService {
     if (!formModulesDetails)
       throw new NotFoundException(`Module Not Found. Kindly contact Admin`);
 
-    if (formModulesDetails.code !== ModuleCode.HEADCOUNTREQUEST)
-      throw new NotFoundException(`Invalid Module`);
+    // if (formModulesDetails.code !== ModuleCode.HEADCOUNTREQUEST)
+    //   throw new NotFoundException(`Invalid Module`);
 
     const currentWorkflow = await this.workflowRepo.findOne(
       { moduleId, status: true },
@@ -1866,24 +1867,24 @@ export class FormDetailsService {
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-  private prepareHeadcountWorkflowOrder(workflows: any[], formInfo: any) {
-    const isHeadOfPnCFinalApprover =
-      formInfo.is_role_in_budget === "No" ||
-      formInfo.is_new_role_or_replacement === "New Role";
-
-    return workflows.map((workflow, index, array) => ({
-      level: workflow.level,
-      roleId: workflow.role ? workflow.role : workflow.roleId,
-      name: workflow.name,
-      code: workflow.code,
-      isSpecificDeptApprover: workflow.isSpecificDeptApprover || false,
-      includeOnRequesterCheck: workflow.includeOnRequesterCheck || false,
-      status:
-        index === 0 ? FormHistoryStatus.PENDING : FormHistoryStatus.UPCOMING,
-      isHeadOfPnCFinalApprover:
-        index === array.length - 1 ? isHeadOfPnCFinalApprover : false,
-    }));
-  }
+  // private prepareHeadcountWorkflowOrder(workflows: any[], formInfo: any) {
+  //   const isHeadOfPnCFinalApprover =
+  //     formInfo.is_role_in_budget === "No" ||
+  //     formInfo.is_new_role_or_replacement === "New Role";
+  //
+  //   return workflows.map((workflow, index, array) => ({
+  //     level: workflow.level,
+  //     roleId: workflow.role ? workflow.role : workflow.roleId,
+  //     name: workflow.name,
+  //     code: workflow.code,
+  //     isSpecificDeptApprover: workflow.isSpecificDeptApprover || false,
+  //     includeOnRequesterCheck: workflow.includeOnRequesterCheck || false,
+  //     status:
+  //       index === 0 ? FormHistoryStatus.PENDING : FormHistoryStatus.UPCOMING,
+  //     isHeadOfPnCFinalApprover:
+  //       index === array.length - 1 ? isHeadOfPnCFinalApprover : false,
+  //   }));
+  // }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   private createFormHistory(data: any) {
@@ -1921,15 +1922,15 @@ export class FormDetailsService {
     if (roleReportingEmail && formDto.createdBy !== roleReportingEmail)
       ccEmails.push(roleReportingEmail);
 
-    await this.mailerCommonService.sendHeadCountAssociateEmail(
-      queryString,
-      userEmails,
-      formDto.code,
-      emailStatus,
-      formDto.departmentName,
-      "",
-      ccEmails,
-    );
+    // await this.mailerCommonService.sendHeadCountAssociateEmail(
+    //   queryString,
+    //   userEmails,
+    //   formDto.code,
+    //   emailStatus,
+    //   formDto.departmentName,
+    //   "",
+    //   ccEmails,
+    // );
   }
 
   //Vendor and headcount form details common code

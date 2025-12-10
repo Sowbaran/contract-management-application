@@ -11,4 +11,5 @@ export interface SwitchLabelProps extends SwitchProps, LabelLayoutProps {
   switchContainerStyle?: string;
   switchLabelStyle?: string;
   errorMessage?: string;
+  htmlFor?: string;
 }

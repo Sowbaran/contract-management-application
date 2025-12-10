@@ -685,9 +685,13 @@ export const ContractFormListPage = () => {
 
   useEffect(() => {
     if (selectedModule) {
+      console.log("Selected Module:", selectedModule);
+      console.log("Module Permissions:", selectedModule.permissions);
+      console.log("FormsTabConst:", FormsTabConst);
       const filtered = FormsTabConst.filter(item =>
         selectedModule.permissions?.some((it: string) => it === item.id)
       );
+      console.log("Filtered Tabs:", filtered);
       setSelectedRequestTabs(filtered);
       
       // Set default tab if no tab is selected
@@ -992,7 +996,7 @@ export const ContractFormListPage = () => {
               selectedTab={selectedRequestTab?.id}
               tabList={selectedRequestTabs}
               onTabChange={onTabChange}
-              tabStyle="data-[selected]:border-b-2 data-[selected]:border-b-green-500 data-[selected]:text-green-600 hover:border-b-2 hover:border-b-gray-300 hover:text-gray-700 text-md font-medium"
+              tabStyle="data-[selected]:border-b-2 data-[selected]:border-b-green-500 data-[selected]:text-green-600 hover:border-b-2 hover:border-b-gray-300 hover:text-green-600 text-[#632b50] text-md font-medium"
             />
           </div>
         </div>
@@ -1010,7 +1014,7 @@ export const ContractFormListPage = () => {
               iconRight={
                 <button
                   type="button"
-                  className="border-b-3 px-2 rounded-r-md h-9 w-9 bg-green-600 -mr-4 cursor-default"
+                  className="border-b-3 px-2 rounded-r-md h-9 w-9 bg-[#632b50] -mr-4 cursor-default"
                 >
                   <MagnifyingGlassIcon className="text-white w-5 h-5" />
                 </button>
@@ -1023,9 +1027,8 @@ export const ContractFormListPage = () => {
           <div className="flex flex-wrap md:flex-nowrap gap-2 w-full md:w-auto justify-end">
             {selectedRequestTab?.type === "myRequest" && (
               <Button
-                className="btn-new-form"
+                className="btn-new-form bg-[#632b50] text-white font-medium hover:bg-[#632b50] hover:border-[#632b50]"
                 leftIcon={<PlusCircleIcon className="text-white w-5 h-5" />}
-                variant="green"
                 size="sm"
                 label="New Request"
                 onClick={() => setFinanceDrawerOpen(true)}
@@ -1033,8 +1036,7 @@ export const ContractFormListPage = () => {
             )}
             <Button
               leftIcon={<AdjustmentsHorizontalIcon className="text-primary w-5 h-5" />}
-              variant="green"
-              //className="bg-green-600 text-white font-medium hover:bg-gray-500 hover:border-gray-500"
+              className="bg-[#632b50] text-white font-medium hover:bg-[#632b50] hover:border-[#632b50]"
               size="sm"
               label="Advance Filter"
               onClick={() => handleClickAdvanceFilter()}
@@ -1244,7 +1246,7 @@ export const ContractFormListPage = () => {
                 </div>
               </div>
               <button
-                className="p-1 m-3 mx-5 rounded-md absolute left-0 right-0 bottom-0 text-white bg-green-600 hover:bg-gray-500 border border-green-600 hover:border-gray-500"
+                className="p-1 m-3 mx-5 rounded-md absolute left-0 right-0 bottom-0 text-white bg-[#632b50] hover:bg-green-600 border border-[#632b50] hover:border-green-600"
                 type="button"
                 disabled={
                   filterState.department.length <= 0 &&

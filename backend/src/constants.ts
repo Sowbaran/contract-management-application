@@ -6,7 +6,7 @@ export const MailRedirectFrontEndPathApproveRequest =
   "/finance/vendor-contract/requests/detail/formDetailId?page=approveRequest&moduleId=ModuleCodeId";
 
 export const ModuleCode = {
-  HEADCOUNTREQUEST: "headcount",
+  // HEADCOUNTREQUEST: "headcount",
   VENDORCONTRACT: "contract",
   SETTINGS: "settings",
 };
@@ -83,7 +83,8 @@ export const ROLECODES = {
   SUPERADMIN: "super-admin",
   VENDORMODULEADMIN: "vendor-module-admin",
   FINANCEADMIN: "finance-admin",
-  HEADCOUNTMODULEADMIN: "headcount-module-admin",
+  LEGALADMIN: "legal-admin",
+  // HEADCOUNTMODULEADMIN: "headcount-module-admin",
   CEO: "ceo",
   CFO: "cfo",
   DeedOfNovation: "Deed of Novation",
@@ -116,11 +117,11 @@ export const financeFilterStatus = {
   //ESIGNDECLINED: "esign-declined",
 };
 
-export const headcountFilterStatus = {
-  PENDING: "pending",
-  COMPLETED: "completed",
-  REJECTED: "rejected",
-};
+// export const headcountFilterStatus = {
+//   PENDING: "pending",
+//   COMPLETED: "completed",
+//   REJECTED: "rejected",
+// };
 
 export const PermissionCodes = {
   CONTRACT: {
@@ -134,15 +135,15 @@ export const PermissionCodes = {
     MYAPPROVEDREQUEST: "view-my-approved-requests-tab",
     VIEWMYESIGNREQUEST: "view-e-sign-requests-tab",
   },
-  HEADCOUNT: {
-    VIEWREQUEST: "view-headcount-request",
-    VIEWDASHBOARD: "view-dashboard-menu",
-    VIEWFORMMENU: "view-headcount-forms-menu",
-    MYREQUEST: "view-headcount-my-requests-tab",
-    TEAMREQUEST: "view-headcount-team-requests-tab",
-    APPROVEREQUEST: "view-headcount-approve-request-tab",
-    VIEWCONFIGURATION: "view-headcount-configuration",
-  },
+  // HEADCOUNT: {
+  //   VIEWREQUEST: "view-headcount-request",
+  //   VIEWDASHBOARD: "view-dashboard-menu",
+  //   VIEWFORMMENU: "view-headcount-forms-menu",
+  //   MYREQUEST: "view-headcount-my-requests-tab",
+  //   TEAMREQUEST: "view-headcount-team-requests-tab",
+  //   APPROVEREQUEST: "view-headcount-approve-request-tab",
+  //   VIEWCONFIGURATION: "view-headcount-configuration",
+  // },
   SETTINGS: {
     VIEWSETTINGS: "view-settings",
     VIEWUSERSETTINGS: "view-user-settings",

@@ -182,20 +182,24 @@ export class UsersService {
     const transformedData = data.map((user) => {
       const modules = new Set<string>();
       const permissions = new Set<string>();
-      const departments = user.departments.map((department) => {
+      // Handle cases where user has no departments or departments is null/undefined
+      const departments = (user.departments || []).map((department) => {
         // Extract roles for each department
-        const roles = department.roles.map((role) => {
+        const roles = (department.roles || []).map((role) => {
           //role.moduleId?.forEach((module) => modules.add(module));
-          role.permissions?.forEach((permission) => {
-            if (permission.permissionCode)
+          // Handle cases where role has no permissions
+          if (role.permissions && Array.isArray(role.permissions)) {
+            role.permissions.forEach((permission) => {
+              if (permission && permission.permissionCode)
               permissions.add(permission.permissionName);
-            if (permission.moduleCode) modules.add(permission.moduleName);
+              if (permission && permission.moduleCode) modules.add(permission.moduleName);
           });
+          }
 
           return role.name; // Return role name
         });
         return {
-          name: department.name,
+          name: department.name || "",
           roles,
         };
       });
@@ -382,10 +386,21 @@ export class UsersService {
       return this.getRoleMetaData(emailId, guestName); // No departments found, fallback to default role
     }
     // Process the user departments to get roles and modules
-    const { roles, modules } = this.processUserDepartments(
+    const { roles, modules } = await this.processUserDepartments(
       existingUser.departments,
+      emailId, // Pass emailId for logging
     );
     const sortedModules = this.helperService.sortModules(modules);
+    
+    // Debug logging for specific user
+    if (emailId === "test-schandolu@sstcspl.com") {
+      this.logger.log(`User ${emailId} - Modules: ${JSON.stringify(sortedModules)}`);
+      const contractModule = sortedModules.find(m => m.code === "contract");
+      if (contractModule) {
+        this.logger.log(`User ${emailId} - Contract Module Permissions: ${JSON.stringify(contractModule.permissions)}`);
+      }
+    }
+    
     return {
       data: {
         username: existingUser.name ?? guestName,
@@ -417,38 +432,99 @@ export class UsersService {
   }
 
   // Process and return roles and modules from the user's departments
-  processUserDepartments(departments: Department[]): {
+  async processUserDepartments(departments: Department[], emailId?: string): Promise<{
     roles: Role[];
     modules: Module[];
-  } {
+  }> {
     const roles: Role[] = []; // Initialize roles array
     const modulesMap = new Map<string, Module>(); // To store modules with unique moduleIds
+    const roleIdsSet = new Set<string>(); // To track unique role IDs
+
+    // Collect all unique role IDs from departments
+    departments.forEach((department) => {
+      if (department.roles && Array.isArray(department.roles)) {
+        department.roles.forEach((role) => {
+          // Handle both role objects and role IDs
+          const roleId = role._id || role;
+          if (roleId) {
+            const roleIdStr = roleId.toString();
+            if (!roleIdsSet.has(roleIdStr)) {
+              roleIdsSet.add(roleIdStr);
+            }
+          }
+        });
+      }
+    });
+
+    // Fetch fresh roles from database to get latest permissions
+    // Fetch without status filter first to see if role exists, then filter by status when processing
+    const freshRoles = await Promise.all(
+      Array.from(roleIdsSet).map(async (roleIdStr) => {
+        const freshRole = await this.rolesRepo.findOne({
+          _id: new Types.ObjectId(roleIdStr),
+        });
+        return freshRole;
+      }),
+    );
+
+    // Create a map of fresh roles by ID for quick lookup
+    const freshRolesMap = new Map<string, typeof freshRoles[0]>();
+    freshRoles.forEach((role) => {
+      if (role) {
+        freshRolesMap.set(role._id.toString(), role);
+      }
+    });
 
     // Iterate over departments and roles
     departments.forEach((department) => {
+      if (department.roles && Array.isArray(department.roles)) {
       department.roles.forEach((role) => {
-        // Add the role if it's not already added
-        if (
-          role.name &&
-          !roles.some((r) => r._id.toString() === role._id.toString())
-        ) {
+          // Handle both role objects and role IDs
+          const roleId = role._id || role;
+          if (!roleId) return;
+          
+          const roleIdStr = roleId.toString();
+          const freshRole = freshRolesMap.get(roleIdStr);
+
+          // Add the role if it's not already added (use fresh role data if available, otherwise embedded)
+          if (freshRole) {
+            if (!roles.some((r) => r._id.toString() === roleIdStr)) {
+              roles.push({
+                _id: freshRole._id,
+                name: freshRole.name,
+                code: freshRole.code,
+                status: freshRole.status,
+              });
+            }
+          } else if (role.name && !roles.some((r) => r._id.toString() === roleIdStr)) {
+            // Fallback to embedded role data if fresh role not found
           roles.push({
-            _id: role._id,
+              _id: role._id || new Types.ObjectId(roleIdStr),
             name: role.name,
             code: role.code,
             status: role.status,
           });
         }
 
-        // Process permissions within the role
-        if (role.permissions) {
-          //this.processRolePermissions(role.permissions, modulesMap); // Update the modulesMap with permissions
+          // Process permissions from fresh role (not embedded) - only if role is active
+          if (freshRole && freshRole.status && freshRole.permissions) {
+            // Debug logging for specific user
+            if (emailId === "test-schandolu@sstcspl.com") {
+              this.logger.log(`Processing role: ${freshRole.name} (${freshRole.code})`);
+              this.logger.log(`Role permissions count: ${freshRole.permissions.length}`);
+              freshRole.permissions.forEach((perm: any) => {
+                this.logger.log(`Permission: ${perm.permissionCode}, status: ${perm.status}, moduleStatus: ${perm.moduleStatus}`);
+              });
+            }
           this.helperService.processRolePermissions(
-            role.permissions,
+              freshRole.permissions,
             modulesMap,
-          ); // Update the modulesMap with permissions
+            ); // Update the modulesMap with permissions from fresh role
+          } else if (freshRole && emailId === "test-schandolu@sstcspl.com") {
+            this.logger.log(`Skipping role ${freshRole.name}: status=${freshRole.status}, hasPermissions=${!!freshRole.permissions}`);
         }
       });
+      }
     });
 
     // Convert modulesMap to an array

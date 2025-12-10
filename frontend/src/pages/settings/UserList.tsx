@@ -219,6 +219,18 @@ export const UserList = () => {
     }
   }, [drawerOpen, queryClient]);
 
+  // Separate effect for handling search input changes and resetting page
+  useEffect(() => {
+    if (searchInput && tablePage.currentPage !== 1) {
+      setTablePage(prev => ({
+        ...prev,
+        currentPage: 1,
+        startRow: 0
+      }));
+    }
+  }, [searchInput]); // Only depend on searchInput
+
+  // Separate effect for filtering and pagination
   useEffect(() => {
     const filteredData = alteredTableRes.filter((user: AnyProp) => {
       return (
@@ -227,37 +239,37 @@ export const UserList = () => {
       );
     });
 
-    // Reset to the first page on search change
-    if (searchInput && tablePage.currentPage !== 1) {
-      setTablePage(prev => ({
-        ...prev,
-        currentPage: 1,
-        startRow: 0
-      }));
-    }
-
     if (!allowPageApi) {
       const startIndex = tablePage.rowPerPage * (tablePage.currentPage - 1);
       const endIndex = tablePage.rowPerPage * tablePage.currentPage;
       const sliced = filteredData.slice(startIndex, endIndex);
       setFormatedTableData(sliced);
 
-      if (startIndex >= filteredData.length) {
-        setTablePage(prev => ({
-          ...prev,
-          currentPage: Math.max(1, Math.ceil(filteredData.length / tablePage.rowPerPage))
-        }));
+      // Only update page if we're out of bounds and it's different from current
+      if (startIndex >= filteredData.length && filteredData.length > 0) {
+        const newPage = Math.max(1, Math.ceil(filteredData.length / tablePage.rowPerPage));
+        if (newPage !== tablePage.currentPage) {
+          setTablePage(prev => ({
+            ...prev,
+            currentPage: newPage
+          }));
+        }
       }
     } else {
       setFormatedTableData(filteredData);
     }
 
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    setPaginationMeta((prev: any) => ({
-      ...prev,
-      totalRowCount: filteredData.length
-    }));
-  }, [tablePage, alteredTableRes, searchInput]);
+    // Only update pagination meta if totalRowCount actually changed
+    setPaginationMeta((prev: any) => {
+      if (prev.totalRowCount === filteredData.length) {
+        return prev; // Return same object if value hasn't changed
+      }
+      return {
+        ...prev,
+        totalRowCount: filteredData.length
+      };
+    });
+  }, [alteredTableRes, searchInput, tablePage.currentPage, tablePage.rowPerPage, allowPageApi]); // Use specific tablePage properties
 
   const handleAddButton = () => {
     setIsCreating("add");

@@ -88,14 +88,34 @@ export const UserForm = ({ open, isCreating, setOpen, selectedRowId }: UserFormP
       setUserName(userDetails?.data.name ? userDetails?.data.name : "");
       setInputEmailId(userDetails?.data.email ? userDetails?.data.email : "");
       const transformResponse = (response: UserResponseDto): DepartmentRole[] => {
-        return response.departments.map(department => ({
-          id: uuidv4(),
-          department: { value: department._id.toString(), label: department.name },
-          roles: department.roles.map(role => ({
-            value: role._id.toString(),
-            label: role.name
-          }))
-        }));
+        // Handle cases where departments is undefined, null, or empty
+        if (!response.departments || !Array.isArray(response.departments) || response.departments.length === 0) {
+          return [];
+        }
+        return response.departments
+          .map(department => {
+            // Handle cases where department or its properties might be undefined
+            if (!department || !department._id) {
+              return null;
+            }
+            return {
+              id: uuidv4(),
+              department: { value: department._id.toString(), label: department.name || "" },
+              roles: (department.roles && Array.isArray(department.roles) ? department.roles : [])
+                .map(role => {
+                  // Handle cases where role might be undefined or missing _id
+                  if (!role || !role._id) {
+                    return null;
+                  }
+                  return {
+                    value: role._id.toString(),
+                    label: role.name || ""
+                  };
+                })
+                .filter((role): role is { value: string; label: string } => role !== null) // Filter out any null roles
+            };
+          })
+          .filter((dept): dept is DepartmentRole => dept !== null); // Filter out any null departments
       };
       const transformedResponse = transformResponse(userDetails?.data);
       setDepartmentRoles(transformedResponse);

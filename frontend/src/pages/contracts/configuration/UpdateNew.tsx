@@ -284,12 +284,11 @@ export function ContractConfigurationUpdateFormNew() {
             </span>
             <Button
               leftIcon={<PlusCircleIcon className="text-white w-5 h-5" />}
-              variant="green"
+              className="w-full sm:w-auto bg-[#632b50] text-white font-medium hover:bg-green-600 hover:border-green-600 cursor-pointer"
               size="sm"
               label="Add Level"
               onClick={handleAddRow}
               disabled={configurationData.length >= roleOptions.length}
-              className="w-full sm:w-auto"
             />
           </div>
           <div className="border-b border-gray-200" />
@@ -541,7 +540,7 @@ export function ContractConfigurationUpdateFormNew() {
             label="Cancel"
             onClick={handleCancel}
           />
-          <Button variant="green" size="sm" label="Save" onClick={handleSave} />
+          <Button className="bg-[#632b50] text-white font-medium hover:bg-green-600 hover:border-green-600" size="sm" label="Save" onClick={handleSave} />
         </div>
       </div>
 

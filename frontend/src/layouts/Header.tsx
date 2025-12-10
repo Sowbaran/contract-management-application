@@ -308,7 +308,7 @@ export function Header({ data }: HeaderProp) {
               {/* Dropdown */}
               <Menu
                 selectedId={selectedModule?.code}
-                buttonClassName="bg-green-600 text-sm w-48"
+                buttonClassName="bg-[#632b50] text-sm w-48"
                 label={selectedModule?.name || "Select Module"}
                 buttonVariants={{ variant: "dark" }}
                 containerVariants={{ align: "left" }}
@@ -390,7 +390,7 @@ export function Header({ data }: HeaderProp) {
             {/* Dropdown */}
             <Menu
               selectedId={selectedModule?.code}
-              buttonClassName="bg-green-600 text-sm mnu-module w-48"
+              buttonClassName="bg-[#632b50] text-sm mnu-module w-48"
               label={selectedModule?.name || "Select Module"}
               buttonVariants={{ variant: "dark" }}
               containerVariants={{ align: "left" }}

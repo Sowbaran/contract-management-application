@@ -7,110 +7,110 @@ export class MailerCommonService {
     this.baseUrl = process.env.FRONTEND_BASE_URL || "https://forms.nrl.com.au";
   }
   //Your request has been rejected at {workflow approval stage} due to the following reason {last comment}.
-  async sendHeadCountAssociateEmail(
-    queryString: string,
-    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
-    userEmails: any,
-    code: string,
-    type: string,
-    depaertment: string,
-    comments?: string,
-    createdBy?: string[],
-    moduleId?: string,
-    formId?: string,
-  ): Promise<void> {
-    //cc Requester and Hiring Manager
-    const baseUrlLink = `<a href="${this.baseUrl}${queryString}">Click this link to login</a>`;
-    let subject = `New Headcount Request ${code}`;
-    let bodyVal = `Dear Approver,<br/>
- 
-    <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b>  <br/>
- 
-    <br/> ${baseUrlLink}<br/>
-
-    <br/> to Approve or Reject the request <br/>
-
-    <br/> Thanks,<br/>
- 
-    <br/> Headcount Request System`;
-
-    if (type === "new_role_or_budget") {
-      subject = `New Headcount Request ${code}`;
-      bodyVal = `Dear Approver,<br/>
-
-      <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b>  <br/>
-
-      <br/>The following flags have been triggered for this request:  <br/>
-
-      <ul>
-        <li>New Role</li>
-        <li>In budget: N</li>
-      </ul>
-
-      <br/> ${baseUrlLink}<br/>
-
-      <br/> to Approve or Reject the request <br/>
-
-      <br/> Thanks,<br/>
-
-      <br/> Headcount Request System`;
-    }
-    if (type === "completed") {
-      //cc Last approver
-      subject = `New Headcount Approved ${code}`;
-      bodyVal = `Dear Requester,<br/>
-      
-      <br/> Your request has been reviewed and fully approved. <br/>
- 
-      <br/> ${baseUrlLink}<br/>
-
-      <br/> to go to your submitted request. <br/>
-
-      <br/> Thanks,<br/>
- 
-      <br/> Headcount Request System`;
-    }
-
-    if (type === "resubmit") {
-      //cc Requester and Hiring Manager
-      subject = `New Headcount Request ${code} - Resubmission`;
-      bodyVal = `Dear Approver,<br/>
-    
-      <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b> <br/>
- 
-      <br/> ${baseUrlLink}<br/>
-
-      <br/> to Approve or Reject the request <br/>
-
-      <br/> Thanks,<br/>
- 
-      <br/> Headcount Request System`;
-    }
-
-    if (type === "rejected") {
-      subject = `New Headcount Request ${code} - Rejected`;
-      bodyVal = `Dear Requester,<br/>
-
-      <br/> Your request has been rejected at <b>  ${depaertment}  </b> stage <br/>
-      
-      <br> due to the following reason- <b> ${comments} </b>  
- 
-      <br/> ${baseUrlLink}<br/>
-
-      <br/> should you wish to resubmit the request. <br/>
-
-      <br/> Thanks,<br/>
- 
-      <br/>  Headcount Request System`;
-    }
-
-    return await this.emailService.sendEmailWithTemplate(
-      userEmails,
-      subject,
-      bodyVal,
-      createdBy,
-    );
-  }
+  // async sendHeadCountAssociateEmail(
+  //   queryString: string,
+  //   // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+  //   userEmails: any,
+  //   code: string,
+  //   type: string,
+  //   depaertment: string,
+  //   comments?: string,
+  //   createdBy?: string[],
+  //   moduleId?: string,
+  //   formId?: string,
+  // ): Promise<void> {
+  //   //cc Requester and Hiring Manager
+  //   const baseUrlLink = `<a href="${this.baseUrl}${queryString}">Click this link to login</a>`;
+  //   let subject = `New Headcount Request ${code}`;
+  //   let bodyVal = `Dear Approver,<br/>
+  // 
+  //   <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b>  <br/>
+  // 
+  //   <br/> ${baseUrlLink}<br/>
+  //
+  //   <br/> to Approve or Reject the request <br/>
+  //
+  //   <br/> Thanks,<br/>
+  // 
+  //   <br/> Headcount Request System`;
+  //
+  //   if (type === "new_role_or_budget") {
+  //     subject = `New Headcount Request ${code}`;
+  //     bodyVal = `Dear Approver,<br/>
+  //
+  //     <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b>  <br/>
+  //
+  //     <br/>The following flags have been triggered for this request:  <br/>
+  //
+  //     <ul>
+  //       <li>New Role</li>
+  //       <li>In budget: N</li>
+  //     </ul>
+  //
+  //     <br/> ${baseUrlLink}<br/>
+  //
+  //     <br/> to Approve or Reject the request <br/>
+  //
+  //     <br/> Thanks,<br/>
+  //
+  //     <br/> Headcount Request System`;
+  //   }
+  //   if (type === "completed") {
+  //     //cc Last approver
+  //     subject = `New Headcount Approved ${code}`;
+  //     bodyVal = `Dear Requester,<br/>
+  //     
+  //     <br/> Your request has been reviewed and fully approved. <br/>
+  // 
+  //     <br/> ${baseUrlLink}<br/>
+  //
+  //     <br/> to go to your submitted request. <br/>
+  //
+  //     <br/> Thanks,<br/>
+  //
+  //     <br/> Headcount Request System`;
+  //   }
+  //
+  //   if (type === "resubmit") {
+  //     //cc Requester and Hiring Manager
+  //     subject = `New Headcount Request ${code} - Resubmission`;
+  //     bodyVal = `Dear Approver,<br/>
+  //   
+  //     <br/>You have been assigned to review the headcount request submitted for- <b> ${depaertment}. </b> <br/>
+  // 
+  //     <br/> ${baseUrlLink}<br/>
+  //
+  //     <br/> to Approve or Reject the request <br/>
+  //
+  //     <br/> Thanks,<br/>
+  // 
+  //     <br/> Headcount Request System`;
+  //   }
+  //
+  //   if (type === "rejected") {
+  //     subject = `New Headcount Request ${code} - Rejected`;
+  //     bodyVal = `Dear Requester,<br/>
+  //
+  //     <br/> Your request has been rejected at <b>  ${depaertment}  </b> stage <br/>
+  //     
+  //     <br> due to the following reason- <b> ${comments} </b>  
+  // 
+  //     <br/> ${baseUrlLink}<br/>
+  //
+  //     <br/> should you wish to resubmit the request. <br/>
+  //
+  //     <br/> Thanks,<br/>
+  // 
+  //     <br/>  Headcount Request System`;
+  //   }
+  //
+  //   return await this.emailService.sendEmailWithTemplate(
+  //     userEmails,
+  //     subject,
+  //     bodyVal,
+  //     createdBy,
+  //   );
+  // }
   async sendAssociateEmail(
     queryString: string,
     // biome-ignore lint/suspicious/noExplicitAny: <explanation>

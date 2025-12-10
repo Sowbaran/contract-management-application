@@ -1,7 +1,7 @@
 import { Listbox, ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { forwardRef, useEffect, useRef, useState, useImperativeHandle } from "react";
+import { forwardRef, useEffect, useRef, useState, useImperativeHandle, useMemo } from "react";
 import { cn } from "../../utils";
 import { Input } from "../Input";
 import {
@@ -32,6 +32,10 @@ export const Select = forwardRef<{ focus: () => void }, SelectProps>(
     const [dropUp, setDropUp] = useState(false);
     const listboxRef = useRef<HTMLDivElement>(null);
     const buttonRef = useRef<HTMLButtonElement>(null); // Ref for ListboxButton
+    const prevOptionsRef = useRef<string>(""); // Store stringified options for comparison
+
+    // Memoize options string to prevent unnecessary updates
+    const optionsString = useMemo(() => JSON.stringify(options), [options]);
 
     useEffect(() => {
       const handlePosition = () => {
@@ -44,11 +48,20 @@ export const Select = forwardRef<{ focus: () => void }, SelectProps>(
 
       handlePosition();
       window.addEventListener("resize", handlePosition);
-      
-      !lisItemOpen && setListOptions(options);
 
       return () => window.removeEventListener("resize", handlePosition);
-    }, [lisItemOpen, options, bottomSpaceDiff]);
+    }, [lisItemOpen, bottomSpaceDiff]);
+
+    // Separate effect for updating listOptions only when options actually change
+    useEffect(() => {
+      // Only update if options content actually changed (not just reference)
+      if (optionsString !== prevOptionsRef.current) {
+        prevOptionsRef.current = optionsString;
+        if (!lisItemOpen) {
+          setListOptions(options);
+        }
+      }
+    }, [optionsString, lisItemOpen, options]);
 
     // Expose focus method via ref
     useImperativeHandle(ref, () => ({

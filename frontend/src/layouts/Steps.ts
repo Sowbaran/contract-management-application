@@ -25,7 +25,7 @@ export const Steps: Step[] = [
       },
       {
         classes:
-          "shepherd-button-primary bg-green-600 hover:bg-green-700 text-white green-hover-bg ",
+          "shepherd-button-primary bg-[#632b50] hover:bg-[#632b50] text-white green-hover-bg ",
         text: "Next",
         type: "next",
       },
@@ -156,7 +156,7 @@ export const Steps: Step[] = [
       },
       {
         classes:
-          "shepherd-button-primary bg-green-600 hover:bg-green-700 text-white green-hover-bg ",
+          "shepherd-button-primary bg-[#632b50] hover:bg-[#632b50] text-white green-hover-bg ",
         text: "Next",
         type: "next",
       },
@@ -282,7 +282,7 @@ export const Steps: Step[] = [
       },
       {
         classes:
-          "shepherd-button-primary bg-green-600 hover:bg-green-700 text-white green-hover-bg ",
+          "shepherd-button-primary bg-[#632b50] hover:bg-[#632b50] text-white green-hover-bg ",
         text: "Next",
         type: "next",
       },
@@ -403,7 +403,7 @@ export const Steps: Step[] = [
       },
       {
         classes:
-          "shepherd-button-primary bg-green-600 hover:bg-green-700 text-white green-hover-bg",
+          "shepherd-button-primary bg-[#632b50] hover:bg-[#632b50] text-white green-hover-bg",
         text: "Done",
         type: "next",
       },

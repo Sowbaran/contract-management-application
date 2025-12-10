@@ -426,12 +426,12 @@ export class RolesService {
       data = data.filter((role) => allowedRoleCodes.includes(role.code));
     }
 
-    data.push({
-      _id: new Types.ObjectId(), // Generate a random ObjectId
-      name: "headcount-module-admin",
-      code: "headcount-module-admin",
-      // Type cast to avoid TypeScript error
-    } as Roles);
+    // data.push({
+    //   _id: new Types.ObjectId(), // Generate a random ObjectId
+    //   name: "headcount-module-admin",
+    //   code: "headcount-module-admin",
+    //   // Type cast to avoid TypeScript error
+    // } as Roles);
     return {
       message: "All Roles data found successfully",
       data,

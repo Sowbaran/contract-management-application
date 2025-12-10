@@ -36,6 +36,7 @@ interface RoleCheckResult {
   isSuperAdmin: boolean;
   isModuleAdmin: boolean;
   isFinanceAdmin: boolean;
+  isLegalAdmin: boolean;
 }
 
 interface Department {
@@ -118,7 +119,7 @@ export class HelperService {
     this.logger.log(`Approval Roles ${JSON.stringify(roleCheckResult)}`);
     const isAllAccess =
       roleCheckResult.isSuperAdmin || roleCheckResult.isModuleAdmin;
-    const isAdditionalAccess = roleCheckResult.isFinanceAdmin;
+    const isAdditionalAccess = roleCheckResult.isFinanceAdmin || roleCheckResult.isLegalAdmin;
  
     // Validate permissions
     const hasPermission = await this.validatePermission(
@@ -428,28 +429,29 @@ export class HelperService {
     moduleType: keyof typeof PermissionCodes,
   ): string {
     const permissionCodes = PermissionCodes[moduleType];
-    if (moduleType === "HEADCOUNT") {
-      // Narrow the type to ensure `MYREQUEST`, `TEAMREQUEST`, `APPROVEREQUEST` exist
-      if (
-        "MYREQUEST" in permissionCodes &&
-        "TEAMREQUEST" in permissionCodes &&
-        "APPROVEREQUEST" in permissionCodes &&
-        "VIEWCONFIGURATION" in permissionCodes
-      ) {
-        switch (type) {
-          case TabRequest.MYREQUEST:
-            return permissionCodes.MYREQUEST;
-          case TabRequest.TEAMREQUEST:
-            return permissionCodes.TEAMREQUEST;
-          case TabRequest.APPROVEREQUEST:
-            return permissionCodes.APPROVEREQUEST;
-          case TabRequest.VIEWCONFIGURATION:
-            return permissionCodes.VIEWCONFIGURATION;
-          default:
-            throw new BadRequestException(`Invalid type: ${type}`);
-        }
-      }
-    } else if (moduleType === "CONTRACT") {
+    // if (moduleType === "HEADCOUNT") {
+    //   // Narrow the type to ensure `MYREQUEST`, `TEAMREQUEST`, `APPROVEREQUEST` exist
+    //   if (
+    //     "MYREQUEST" in permissionCodes &&
+    //     "TEAMREQUEST" in permissionCodes &&
+    //     "APPROVEREQUEST" in permissionCodes &&
+    //     "VIEWCONFIGURATION" in permissionCodes
+    //   ) {
+    //     switch (type) {
+    //       case TabRequest.MYREQUEST:
+    //         return permissionCodes.MYREQUEST;
+    //       case TabRequest.TEAMREQUEST:
+    //         return permissionCodes.TEAMREQUEST;
+    //       case TabRequest.APPROVEREQUEST:
+    //         return permissionCodes.APPROVEREQUEST;
+    //       case TabRequest.VIEWCONFIGURATION:
+    //         return permissionCodes.VIEWCONFIGURATION;
+    //       default:
+    //         throw new BadRequestException(`Invalid type: ${type}`);
+    //     }
+    //   }
+    // } else if (moduleType === "CONTRACT") {
+    if (moduleType === "CONTRACT") {
       // Narrow the type to ensure `MYREQUEST`, `TEAMREQUEST`, `APPROVEREQUEST` , `MYAPPROVEDREQUEST` and `VIEWMYESIGNREQUEST` exist
       if (
         "MYREQUEST" in permissionCodes &&
@@ -518,7 +520,7 @@ export class HelperService {
   private getModulePermissionCodes(): Record<string, string[]> {
     return {
       contract: Object.values(PermissionCodes.CONTRACT),
-      headcount: Object.values(PermissionCodes.HEADCOUNT),
+      // headcount: Object.values(PermissionCodes.HEADCOUNT),
       settings: Object.values(PermissionCodes.SETTINGS),
     };
   }
@@ -595,10 +597,11 @@ export class HelperService {
     let isSuperAdmin = false;
     let isModuleAdmin = false;
     let isFinanceAdmin = false;
+    let isLegalAdmin = false;
     
     for (const department of userDepartments) {
       for (const role of department.roles) {
-        // Check for super admin role
+        // Check for super admin role - works for all modules
         if (role.code === ROLECODES.SUPERADMIN) {
           isSuperAdmin = true;
         }
@@ -608,21 +611,24 @@ export class HelperService {
           if (role.code === ROLECODES.FINANCEADMIN) {
             isFinanceAdmin = true;
           }
+          if (role.code === ROLECODES.LEGALADMIN) {
+            isLegalAdmin = true;
+          }
           if (role.code === ROLECODES.VENDORMODULEADMIN) {
             isModuleAdmin = true;
           }
         }
 
-        // Check roles specific to HEADCOUNTREQUEST module
-        if (moduleCode === ModuleCode.HEADCOUNTREQUEST) {
-          if (role.code === ROLECODES.HEADCOUNTMODULEADMIN) {
-            isModuleAdmin = true;
-          }
-        }
+        // // Check roles specific to HEADCOUNTREQUEST module
+        // // if (moduleCode === ModuleCode.HEADCOUNTREQUEST) {
+        // //   if (role.code === ROLECODES.HEADCOUNTMODULEADMIN) {
+        // //     isModuleAdmin = true;
+        // //   }
+        // // }
       }
     }
 
-    return { isSuperAdmin, isModuleAdmin, isFinanceAdmin };
+    return { isSuperAdmin, isModuleAdmin, isFinanceAdmin, isLegalAdmin };
   }
 
   // Userprofile API frame the format roles
@@ -641,7 +647,13 @@ export class HelperService {
     modulesMap: Map<string, Module> = new Map(),
   ): Map<string, Module> {
     permissions.forEach((permission) => {
-      if (permission.moduleStatus) {
+      // Check permission status - log if filtering out view-team-requests-tab
+      if (permission.permissionCode === "view-team-requests-tab") {
+        this.logger.log(`Checking view-team-requests-tab: moduleStatus=${permission.moduleStatus}, status=${permission.status}, type=${typeof permission.status}`);
+      }
+      
+      // Only check moduleStatus - status might be undefined in some cases
+      if (permission.moduleStatus && (permission.status === undefined || permission.status === true)) {
         const moduleIdStr = permission.moduleId.toString();
 
         // Check if the module is already in the map
@@ -659,9 +671,16 @@ export class HelperService {
             // Ensure module exists before using it
             if (!module.permissions.includes(permission.permissionCode)) {
               module.permissions.push(permission.permissionCode); // Add permission if it's not already there
+              if (permission.permissionCode === "view-team-requests-tab") {
+                this.logger.log(`Added view-team-requests-tab to module ${module.code}`);
+              }
+            } else if (permission.permissionCode === "view-team-requests-tab") {
+              this.logger.log(`view-team-requests-tab already exists in module ${module.code}`);
             }
           }
         }
+      } else if (permission.permissionCode === "view-team-requests-tab") {
+        this.logger.log(`Filtered out view-team-requests-tab: moduleStatus=${permission.moduleStatus}, status=${permission.status}`);
       }
     });
 
@@ -685,7 +704,7 @@ export class HelperService {
           ROLECODES.GUESTUSER,
           ROLECODES.SUPERADMIN,
           ROLECODES.VENDORMODULEADMIN,
-          ROLECODES.HEADCOUNTMODULEADMIN,
+          // ROLECODES.HEADCOUNTMODULEADMIN,
         ],
       },
       moduleId: { $in: moduleId },
@@ -1456,6 +1475,14 @@ export class HelperService {
     if (!departments || departments.length === 0) {
       throw new ForbiddenException(`Invalid permission  for user: ${emailId}`);
     }
+    
+    // Check if user is super admin - super admin bypasses permission checks
+    const roleCheckResult = await this.checkUserRoles(departments, moduleCode);
+    if (roleCheckResult.isSuperAdmin) {
+      this.logger.log(`Super Admin ${emailId} - bypassing permission check`);
+      return true;
+    }
+    
     const permissionCheck = await this.validatePermission(
       moduleCode,
       type,

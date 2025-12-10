@@ -18,6 +18,7 @@ export const SwitchLabel = ({
   required = false,
   errorMessage = "",
   onChange,
+  htmlFor,
   ...props
 }: SwitchLabelProps) => {
   const { formState } = formConfig || {};
@@ -29,10 +30,13 @@ export const SwitchLabel = ({
     (errorMessage ||
       (formName && errors && formName in errors ? errors[formName]?.message : undefined));
 
+  // Use htmlFor if provided, otherwise fall back to id
+  const labelFor = htmlFor || id;
+
   return (
     <div>
       <div className={cn("flex flex-row justify-between", props.mainContainerStyle)}>
-        <label htmlFor={htmlFor} className={cn(labelProps.className, "text-gray-900 text-md")}>
+        <label htmlFor={labelFor} className={cn(labelProps.className, "text-gray-900 text-md")}>
           {`${lblText} `}
           {required && <span className="text-red-600 ml-1 text-md">{"*"}</span>}
         </label>
